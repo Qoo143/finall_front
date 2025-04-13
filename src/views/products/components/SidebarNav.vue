@@ -28,6 +28,7 @@ import { RouterLink } from "vue-router";
 <style scoped lang="scss">
 .nav {
   padding: 32px 16px 16px 16px;
+  background-color: $bg-1;
 
   ul {
     list-style: none;
@@ -44,7 +45,7 @@ import { RouterLink } from "vue-router";
         font-weight: 500;
 
         &:hover {
-          color: #42b983;
+          color: $primary-b;
         }
       }
     }

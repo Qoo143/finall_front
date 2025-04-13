@@ -20,4 +20,12 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // 注意：這邊的路徑是相對於本專案的 root，而不是 src！
+        additionalData: `@use "@/assets/css/variables" as *;`
+      }
+    }
+  }
 })

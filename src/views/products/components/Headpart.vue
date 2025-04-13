@@ -1,7 +1,7 @@
 <template>
   <div class="head">
     <div class="logo">
-      <img src="../../../../public/img/QIANTA2.svg" alt="logo" />
+      <img src="../../../../public/img/QIANTA-d-b.svg" alt="logo" />
     </div>
     <div class="user">
       <div class="userInfo">
@@ -26,7 +26,7 @@ const goto = () => {
   height: 100%;
   display: flex;
   align-items: center;
-  padding: 0 25px;
+  padding: 40px 24px;
   justify-content: space-between;
 
   .logo {
@@ -44,10 +44,9 @@ const goto = () => {
       justify-content: center;
       align-items: center;
       font-size: 1.25rem;
-      color: #699cb9;
-      border: 1px dotted;
+      color: $primary-b-d;
+      border: 1px dotted $primary-b-d;
       border-radius: 16px;
-      background-color: #d6e0e2;
 
       &:hover {
         background-color: #c4a3a3;
@@ -58,7 +57,7 @@ const goto = () => {
     }
 
     .user-icon {
-      color: #699cb9;
+      color: $primary-b-d;
       width: 40px;
       height: 40px;
       border-radius: 12px;
@@ -68,9 +67,8 @@ const goto = () => {
     }
     .switch {
       padding: 5px 16px;
-      margin-left: 15px;
-      color: #f7f7f4;
-      background-color: #c7b45d;
+      color: $primary-b-d;
+      background-color: $primary-y;
       border: none;
       border-radius: 16px;
       line-height: 1.5;

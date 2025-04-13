@@ -21,11 +21,11 @@ import Headpart from "@/views/products/components/Headpart.vue";
 .layout {
   width: 100%;
   height: 100vh;
+  background-color: $bg-3;
 
   .header {
     width: 100%;
     height: 60px;
-    background-color: #e6e6e6;
   }
   .section {
     width: 100%;
@@ -34,9 +34,9 @@ import Headpart from "@/views/products/components/Headpart.vue";
 
     .sidebar {
       width: 150px;
-      background-color: #f5f5f5;
-      border-right: 1px solid #ddd;
+
       justify-items: center;
+      border-radius: 0 24px 0 0;
     }
 
     .main {
@@ -46,13 +46,11 @@ import Headpart from "@/views/products/components/Headpart.vue";
 
       .breadcrumb {
         padding: 12px 24px;
-        background: #f9f9f9;
       }
 
       .content {
         flex: 1;
-        padding: 24px;
-        background: #f9f9f9;
+        padding: 16px 24px 24px 24px;
         overflow-y: auto;
       }
     }

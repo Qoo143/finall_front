@@ -1,17 +1,19 @@
 <template>
   <div class="breadcrumb">
-    <template v-for="(item, index) in breadcrumbs" :key="index">
-      <span v-if="index > 0"> / </span>
-      <!-- 若非最後一個，則加上樣式與跳轉Fn -->
-      <span
-        v-if="index !== breadcrumbs.length - 1"
-        class="clickable"
-        @click="goTo(index)"
-        >{{ item }}</span
-      >
-      <!-- 最後一個只有文字 -->
-      <span v-else>{{ item }}</span>
-    </template>
+    <span class="wrap">
+      <template v-for="(item, index) in breadcrumbs" :key="index">
+        <span v-if="index > 0"> / </span>
+        <!-- 若非最後一個，則加上樣式與跳轉Fn -->
+        <span
+          v-if="index !== breadcrumbs.length - 1"
+          class="clickable"
+          @click="goTo(index)"
+          >{{ item }}</span
+        >
+        <!-- 最後一個只有文字 -->
+        <span v-else>{{ item }}</span>
+      </template>
+    </span>
   </div>
 </template>
 
@@ -52,14 +54,20 @@ function goTo(index: number) {
 
 <style scoped lang="scss">
 .breadcrumb {
-  font-size: 14px;
+  font-size: 16px;
+  color: $text-d;
+  .wrap {
+    padding: 5px 8px;
+    border-radius: 8px;
+    background-color: $bg-1;
 
-  .clickable {
-    cursor: pointer;
-    color: #888888;
+    .clickable {
+      cursor: pointer;
+      color: $primary-b-d;
 
-    &:hover {
-      text-decoration: underline;
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

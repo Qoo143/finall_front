@@ -36,7 +36,7 @@ const router = createRouter({
           path: '',
           name: 'ProductList',
           component: () => import('@/views/products/ProductList/index.vue'),
-          meta: { breadcrumb: ['商品管理'] },
+          meta: { breadcrumb: ['商品列表'] },
         },
         {// 無 id，進入新增模式
           path: 'manage',
