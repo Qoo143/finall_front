@@ -1,1 +1,12 @@
-
+//商品列表灰階
+.gray {
+  background-color: $bg-3;
+}
+//激活綠
+.on {
+  color: $active-g;
+}
+//取消紅
+.off {
+  color: $active-r;
+}
