@@ -3,7 +3,7 @@
     <span>確定要刪除商品 {{ productName }} 嗎？</span>
     <template #footer>
       <div class="dialog-footer">
-        <el-button @click="visible = false">取消</el-button>
+        <el-button @click="visible = false" class="cancel">取消</el-button>
         <el-button type="danger" @click="confirmDelete">刪除</el-button>
       </div>
     </template>
@@ -45,5 +45,16 @@ const confirmDelete = async () => {
 };
 </script>
 
-<style type="scss" scoped>
+<style lang="scss" scoped>
+:deep(.cancel.el-button) {
+  border-radius: 8px;
+  background-color: #e5eaf3 !important;
+  color: $text-d;
+}
+
+:deep(.el-button) {
+  border-radius: 8px;
+  background-color: rgb(247, 137.4, 137.4) !important;
+  color: $text-d;
+}
 </style>

@@ -106,14 +106,31 @@
             <td>{{ index + 1 }}</td>
             <td>{{ product.name }}</td>
             <td>
-              <div
+              <img
+                v-if="product.main_image_url"
+                :src="getImageUrl(product.main_image_url)"
+                alt="主圖"
                 style="
                   width: 80px;
                   height: 50px;
-                  background-color: gray;
+                  object-fit: contain;
                   border-radius: 8px;
                 "
-              ></div>
+              />
+              <div
+                v-else
+                style="
+                  width: 80px;
+                  height: 50px;
+                  background-color: #f0f0f0;
+                  border-radius: 8px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                "
+              >
+                -
+              </div>
             </td>
             <td>{{ `$${product.price.toLocaleString()}` }}</td>
             <td>{{ product.stock }}</td>
@@ -123,7 +140,7 @@
                 {{ product.is_active ? "上架中" : "已下架" }}
               </span>
             </td>
-            <td :title="(product.tags || []).map((t) => t.name).join(', ')">
+            <td :title="(product.tags || []).map((t:any) => t.name).join(', ')">
               <span v-if="product.tags?.length">
                 <span class="tag" v-for="tag in product.tags" :key="tag.id">
                   {{ tag.name }}
@@ -136,7 +153,7 @@
             </td>
 
             <td>
-              <span>查看</span>
+              <span @click="openDetail(product)">查看</span>
               |
               <RouterLink :to="`/products/manage/${product.id}`"
                 >編輯</RouterLink
@@ -158,13 +175,9 @@
         layout="total, prev, pager, next, jumper"
         :total="total"
         @current-change="handlePageChange"
-        @size-change="handleSizeChange"
         background
       />
     </div>
-  </div>
-  <!-- 這邊是彈窗 不包起來css會壞掉 -->
-  <!-- <teleport to="body">
     <DeleteConfirmModal
       v-if="deleteDialogVisible"
       v-model:visible="deleteDialogVisible"
@@ -172,7 +185,14 @@
       v-model:productName="selectedProductName"
       :on-deleted="fetchProducts"
     />
-  </teleport> -->
+    <ProductDetailModal
+      v-if="detailDialogVisible"
+      v-model:visible="detailDialogVisible"
+      v-model:product="selectedProduct"
+      :on-deleted="fetchProducts"
+    />
+  </div>
+  <!-- 這邊是彈窗 不包起來css會壞掉 -->
 </template>
 
 <script setup lang="ts">
@@ -217,8 +237,14 @@ const handlePageChange = (val: number) => {
 };
 
 // 資料狀態
-const products = ref<Product[]>([]);
+const products: any = ref<Product[]>([]);
 const loading = ref(false);
+
+//顯示照片邏輯
+const BASE_URL = "http://127.0.0.1:3007";
+const getImageUrl = (relativePath: string) => {
+  return `http://127.0.0.1:3007${relativePath}`;
+};
 
 // 分類選項
 const options = ref<{ value: number; label: string }[]>([]);
@@ -236,6 +262,7 @@ const fetchCategories = async () => {
     console.error("分類查詢失敗", err);
   }
 };
+
 //獲取分類名稱(給頁面渲染)
 const getCategoryLabel = (id: number) => {
   const found = options.value.find((o) => o.value === id);
@@ -253,7 +280,7 @@ const fetchProducts = async () => {
   try {
     loading.value = true;
 
-    const params = {
+    const params: any = {
       page: currentPage.value,
       limit: pageSize.value,
     };
@@ -310,12 +337,12 @@ const fetchProducts = async () => {
 
     // 查詢每筆商品的標籤
     const tagResults = await Promise.allSettled(
-      rawData.map((p) =>
+      rawData.map((p: any) =>
         axios.get(`http://127.0.0.1:3007/api/products/${p.id}/tags`)
       )
     );
 
-    rawData.forEach((p, i) => {
+    rawData.forEach((p: any, i: any) => {
       const tagRes = tagResults[i];
       p.tags =
         tagRes.status === "fulfilled" && tagRes.value.data.code === 0
@@ -347,10 +374,17 @@ const handleReset = () => {
   currentPage.value = 1;
   fetchProducts();
 };
+//查看按鈕邏輯
+const detailDialogVisible = ref(false);
+const selectedProduct = ref<Product | null>(null);
 
+const openDetail = (product: Product) => {
+  selectedProduct.value = product;
+  detailDialogVisible.value = true;
+};
 //刪除按鈕邏輯
 const deleteDialogVisible = ref(false);
-const selectedProductId = ref<number | null>(null);
+const selectedProductId = ref<number | undefined>(undefined);
 const selectedProductName = ref<string>("");
 
 const openDelete = (id: number, name: string) => {
