@@ -101,7 +101,11 @@
           <tr
             v-for="(product, index) in products"
             :key="product.id"
-            :class="index % 2 === 1 ? 'gray' : ''"
+            :class="{
+              gray: index % 2 === 1,
+              'hover-effect-d': index % 2 === 1,
+              'hover-effect-l': index % 2 === 0,
+            }"
           >
             <td>{{ index + 1 }}</td>
             <td>{{ product.name }}</td>
@@ -159,7 +163,6 @@
                 >編輯</RouterLink
               >
               |
-
               <span @click="openDelete(product.id, product.name)">刪除</span>
             </td>
           </tr>
@@ -410,7 +413,7 @@ onMounted(() => {
     align-items: center;
 
     .titleName {
-      width: 100%;
+      width: 200px;
       font-size: 32px;
       font-weight: 600;
       position: relative;
@@ -435,7 +438,7 @@ onMounted(() => {
       width: 100%;
       font-size: 16px;
       display: flex;
-      justify-content: end;
+      // justify-content: end;
       gap: 24px;
 
       a {
@@ -463,12 +466,6 @@ onMounted(() => {
         }
       }
     }
-  }
-  .line {
-    width: 100%;
-    height: 1px;
-    margin-top: 16px;
-    background-color: $text-ll;
   }
   .elementInputArea {
     display: flex;
@@ -517,7 +514,9 @@ onMounted(() => {
       thead {
         background-color: $primary-b-ll;
       }
-
+      thead tr {
+        height: 40px;
+      }
       th,
       td {
         text-align: left;
@@ -529,12 +528,21 @@ onMounted(() => {
       th:first-child {
         padding-left: 24px;
       }
-      thead tr {
-        height: 40px;
-      }
+
       tbody tr {
         height: 64px;
       }
+
+      .hover-effect-l:hover {
+        background-color: #e0e0e0;
+        transition: background-color 0.2s ease;
+      }
+
+      .hover-effect-d:hover {
+        background-color: #c5c5c5;
+        transition: background-color 0.2s ease;
+      }
+
       a,
       td:last-child span {
         color: $primary-b-d;
@@ -560,12 +568,12 @@ onMounted(() => {
       }
     }
   }
-  .pageNation {
-    width: 100%;
-    display: flex;
-    justify-content: end;
-    margin-top: 12px;
-  }
+}
+.pageNation {
+  width: 100%;
+  display: flex;
+  justify-content: end;
+  margin-top: 12px;
 }
 
 //放裡面不生效 這是分類input
@@ -589,5 +597,6 @@ onMounted(() => {
 }
 :deep(.resetBtn.el-button) {
   background-color: $primary-b-l !important;
+  margin-left: 5px;
 }
 </style>

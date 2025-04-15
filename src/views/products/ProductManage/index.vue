@@ -1,22 +1,26 @@
 <template>
-  <div class="product-manage-container">
-    <!-- 上半區塊：基本資料 + 模型 -->
-    <div class="top-section">
-      <div class="left">
-        <ProductBasicInfo v-model="productData.basicInfo" />
-      </div>
-      <div class="right">
-        <ProductModelUpload v-model="productData.model" />
-      </div>
+  <div class="productManage-grid">
+    <div class="item header">
+      <div>編輯頁面</div>
+      <div class="line"></div>
+    </div>
+    <div class="item topPartA">
+      <ProductBasicInfo v-model="productData.basicInfo" />
     </div>
 
-    <!-- 圖片上傳區 -->
-    <div class="image-section">
+    <div class="item topPartB">
+      <ProductDescription v-model="productData.basicInfo" />
+    </div>
+
+    <div class="item topPartC">
+      <ProductModelUpload v-model="productData.model" />
+    </div>
+
+    <div class="item imageSection">
       <ProductImageUpload v-model="productData.images" />
     </div>
 
-    <!-- 確認按鈕 -->
-    <div class="submit-section">
+    <div class="item submitSection">
       <ProductSubmitBar :isEditMode="isEditMode" @submit="handleSubmit" />
     </div>
   </div>
@@ -30,10 +34,12 @@ import ProductBasicInfo from "./components/ProductBasicInfo.vue";
 import ProductModelUpload from "./components/ProductModelUpload.vue";
 import ProductImageUpload from "./components/ProductImageUpload.vue";
 import ProductSubmitBar from "./components/ProductSubmitBar.vue";
+import ProductDescription from "./components/ProductDescription.vue";
 
 const route = useRoute();
 const isEditMode = computed(() => !!route.params.id);
 
+//這是最終收集到資料的物件
 const productData = ref({
   basicInfo: {
     name: "",
@@ -69,41 +75,60 @@ function handleSubmit() {
 </script>
 
 <style scoped lang="scss">
-.product-manage-container {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  padding: 24px;
-  height: 100%;
-  box-sizing: border-box;
-}
+@import "@/assets/css/common.scss";
 
-/* 上半：基本 + 模型 */
-.top-section {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
+.productManage-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 25%) minmax(250px, 25%) minmax(
+      450px,
+      50%
+    );
+  grid-auto-rows: auto;
+  gap: 16px;
 
-.left {
-  flex: 0 0 30%;
-  min-width: 280px;
-}
+  .item {
+    background-color: $bg-1;
+    padding: 16px;
+    border-radius: 16px;
+  }
+  .header {
+    background-color: $bg-3;
+    grid-column: span 3;
+    font-size: 32px;
+    padding: 0px;
+    height: 42px;
+    font-weight: 600;
+    position: relative;
+    color: $primary-b-d;
+    justify-content: center;
 
-.right {
-  flex: 1;
-  min-width: 400px;
-}
+    &::before {
+      content: "";
+      position: absolute;
 
-/* 中段：圖片區 */
-.image-section {
-  width: 100%;
-}
+      left: -12px;
+      top: 0;
+      width: 5px;
+      height: 60%;
+      transform: translateY(40%);
+      background-color: $primary-y;
+      align-items: center;
+      border-radius: 2px;
+    }
+    hr {
+      position: relative;
+      margin: 16px;
+      width: 100%;
+      left: -16px;
+      color: $text-ll;
+    }
+  }
+  .imageSection {
+    grid-column: span 3;
+  }
 
-/* 下段：送出按鈕 */
-.submit-section {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: 12px;
+  .submitSection {
+    grid-column: span 3;
+  }
 }
 </style>

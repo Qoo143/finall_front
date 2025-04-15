@@ -1,56 +1,52 @@
 <template>
-  <div class="product-basic-info flex flex-col gap-6">
-    <label>
-      商品名稱
-      <input
-        v-model="model.name"
-        type="text"
-        placeholder="請輸入商品名稱"
-        class="input"
-      />
-    </label>
-
-    <label>
-      價格（NT$）
-      <input
-        v-model.number="model.price"
-        type="number"
-        placeholder="請輸入價格"
-        class="input"
-      />
-    </label>
-
-    <label>
-      庫存數量
-      <input
-        v-model.number="model.stock"
-        type="number"
-        placeholder="請輸入庫存"
-        class="input"
-      />
-    </label>
-
-    <label>
-      商品標籤
-      <div class="tag-list">
-        <div
-          v-for="tag in allTags"
-          :key="tag.id"
-          class="tag"
-          :class="{ selected: model.tagIds.includes(tag.id) }"
-          @click="toggleTag(tag.id)"
-        >
-          {{ tag.name }}
-        </div>
-      </div>
-    </label>
+  <div class="headEdit">
+    <div class="contentEdit">商品基本資料</div>
   </div>
+  <el-form label-width="70px">
+    <el-form-item label="商品名稱">
+      <el-input v-model="model.name" placeholder="請輸入商品名稱" />
+    </el-form-item>
+
+    <el-form-item label="商品價格">
+      <el-input v-model.number="model.price" type="number" />
+    </el-form-item>
+
+    <el-form-item v-if="createMode" label="庫存數量">
+      <el-input v-model.number="model.stock" type="number" />
+    </el-form-item>
+
+    <el-form-item v-else label="庫1存數量">
+      <el-input v-model.number="model.stock" type="number" />
+    </el-form-item>
+
+    <el-form-item label="更改庫存">
+      <el-input
+        v-model="input3"
+        style="max-width: 600px"
+        placeholder="填寫要增加或減少的數量"
+        class="input-with-select"
+      >
+        <template #prepend>
+          <el-select v-model="select" style="width: 90px" placeholder="選擇">
+            <el-option label="添加" value="1" />
+            <el-option label="減少" value="0" />
+          </el-select>
+        </template>
+        <template #append>
+          <el-button :icon="Select" />
+        </template>
+      </el-input>
+    </el-form-item>
+  </el-form>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import axios from "axios";
-import { log } from "three/tsl";
+import { Select } from "@element-plus/icons-vue";
+const input3 = ref("");
+const select = ref("1"); //預設為添加庫存
+const createMode = ref("false"); //預設為新增模式
 
 interface BasicInfo {
   name: string;
@@ -74,51 +70,19 @@ onMounted(async () => {
 
   allTags.value = res.data.data || [];
 });
-
-function toggleTag(id: number) {
-  const index = model.value.tagIds.indexOf(id);
-  if (index >= 0) {
-    model.value.tagIds.splice(index, 1);
-  } else {
-    model.value.tagIds.push(id);
-  }
-}
 </script>
 
 <style scoped lang="scss">
-.input {
+.headEdit {
   width: 100%;
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 16px;
-  outline: none;
-
-  &:focus {
-    border-color: #409eff;
-  }
-}
-
-.tag-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.tag {
-  padding: 4px 10px;
-  border-radius: 999px;
-  background-color: #e5e7eb; // default gray
-  font-size: 13px;
-  color: #333;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-
-  &.selected {
-    background-color: #a7f3d0; // light green
-    color: #065f46; // dark green
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  .contentEdit {
   }
+}
+:deep(.el-form-item__label) {
+  color: $primary-b-d;
 }
 </style>

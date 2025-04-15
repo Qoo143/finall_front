@@ -10,3 +10,12 @@
 .off {
   color: $active-r;
 }
+//線
+.line {
+  width: 100%;
+  height: 1px;
+  margin: 16px;
+  background-color: $text-ll;
+  position: relative;
+  left: -16px;
+}
