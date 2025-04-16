@@ -1,14 +1,33 @@
-// /api/product.ts
-import axios from "axios";
+import instance from "@/http/index";
 
+// 取得商品資料
 export function getProduct(id: string) {
-  return axios.get(`http://127.0.0.1:3007/products/${id}`);
+  return instance({
+    url: `/products/${id}`,
+    method: "GET",
+  });
 }
 
+// 新增商品
 export function createProduct(data: FormData) {
-  return axios.post("http://127.0.0.1:3007/products", data);
+  return instance({
+    url: "/products",
+    method: "POST",
+    data,
+    headers: {
+      "Content-Type": "multipart/form-data", // ✅ 為了支援 FormData 傳檔案
+    },
+  });
 }
 
+// 更新商品
 export function updateProduct(id: string, data: FormData) {
-  return axios.put(`http://127.0.0.1:3007/products/${id}`, data);
+  return instance({
+    url: `/products/${id}`,
+    method: "PUT",
+    data,
+    headers: {
+      "Content-Type": "multipart/form-data", // ✅ 同上
+    },
+  });
 }
