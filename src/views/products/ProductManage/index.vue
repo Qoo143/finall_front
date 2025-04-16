@@ -3,6 +3,8 @@
     <div class="item header">
       <div>編輯頁面</div>
     </div>
+
+    <!-- 基本資料區 -->
     <div class="item topPartA">
       <ProductBasicInfo
         v-model="productData.basicInfo"
@@ -10,19 +12,22 @@
       />
     </div>
 
+    <!-- 文本描述區 -->
     <div class="item topPartB">
       <ProductDescription v-model="productData.basicInfo" />
     </div>
 
+    <!-- 3D模型區 -->
     <div class="item topPartC">
       <ProductModelUpload v-model="productData.model" />
     </div>
 
+    <!-- 2D圖片區 -->
     <div class="item imageSection">
       <ProductImageUpload v-model="productData.images" />
     </div>
 
-    <!-- 傳上傳fn給子組件 -->
+    <!-- 提交按鈕區 -->
     <div class="item submitSection">
       <ProductSubmitBar :createMode="!isEditMode" :submitFn="handleSubmit" />
     </div>
@@ -30,9 +35,11 @@
 </template>
 
 <script setup lang="ts">
-// --------------------📦 import--------------------
+// --------------------<<import>>--------------------
 import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
+import { getProduct, createProduct, updateProduct } from "@/api/product";
+import { ElMessage } from "element-plus";
 
 import ProductBasicInfo from "./components/ProductBasicInfo.vue";
 import ProductModelUpload from "./components/ProductModelUpload.vue";
@@ -41,12 +48,10 @@ import ProductSubmitBar from "./components/ProductSubmitBar.vue";
 import ProductDescription from "./components/ProductDescription.vue";
 
 import type { ProductData } from "@/types/product"; //大資料物件ts
-import { getProduct, createProduct, updateProduct } from "@/api/product";
-import { ElMessage } from "element-plus";
 
-// --------------------🧠 狀態管理--------------------
+// --------------------<<狀態管理>>--------------------
 const route = useRoute();
-const isEditMode = computed(() => !!route.params.id);
+const isEditMode = computed(() => !!route.params.id); //監測有沒有動態id
 
 //大資料物件
 const productData = ref<ProductData>({
@@ -54,7 +59,7 @@ const productData = ref<ProductData>({
     name: "",
     price: 0,
     stock: 0,
-    isListed: false,
+    isListed: false, //預設不上架
     tagIds: [],
     tagNames: [],
     categoryId: null,
@@ -65,13 +70,14 @@ const productData = ref<ProductData>({
     camera: {
       position: { x: 0, y: 0, z: 0 },
       target: { x: 0, y: 0, z: 0 },
+      //可以考慮擴充scale
     },
   },
   images: [],
 });
 
 // --------------------🔃 初始化資料--------------------
-//若是編輯模式則起動渲染
+//若是編輯模式則起動渲染帶入資料
 onMounted(() => {
   if (isEditMode.value) fetchProduct(route.params.id as string);
 });
@@ -136,7 +142,7 @@ const handleSubmit = async () => {
     });
 
     // ✅ 圖片（只傳 File）
-    images.forEach((img) => {
+    images.forEach((img:any) => {
       if (img.file instanceof File) {
         formData.append("images", img.file);
         formData.append("is_main_flags[]", img.isMain ? "1" : "0");

@@ -36,11 +36,12 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 
 interface UploadImage {
-  file: File;
+  id: number;
+  file: string;
   isMain: boolean;
 }
 
-const model = defineModel<UploadImage[]>({ required: true });
+const model: any = defineModel<UploadImage[]>({ required: true });
 
 function handleUpload(e: Event) {
   const files = (e.target as HTMLInputElement).files;
@@ -63,7 +64,7 @@ function removeImage(index: number) {
 }
 
 function setAsMain(index: number) {
-  model.value.forEach((img, i) => {
+  model.value.forEach((img: any, i: any) => {
     img.isMain = i === index;
   });
 }
