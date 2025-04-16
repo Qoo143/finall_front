@@ -1,43 +1,31 @@
 <template>
-  <div class="submit-float-bar">
-    <button class="submit-btn" @click="$emit('submit')">
-      {{ isEditMode ? "保留變更" : "上傳商品" }}
+  <div class="inputSection">
+    <button class="submitBtn" @click="submitFn?.()">
+      {{ createMode ? "上傳商品" : "保留變更" }}
     </button>
   </div>
 </template>
 
 <script setup lang="ts">
 defineProps<{
-  isEditMode: boolean;
-}>();
-defineEmits<{
-  (e: "submit"): void;
+  createMode: boolean;
+  submitFn?: () => void; // 父層傳入的實際提交函式
 }>();
 </script>
 
-<style scoped>
-.submit-float-bar {
-  position: fixed;
-  bottom: 40px;
-  right: 40px;
-  z-index: 100;
-}
-
-.submit-btn {
-  padding: 12px 24px;
-  background-color: #409eff;
-  color: white;
-  border: none;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: background-color 0.25s ease, transform 0.2s ease;
-}
-
-.submit-btn:hover {
-  background-color: #317fce;
-  transform: translateY(-2px);
+<style lang="scss" scoped>
+.inputSection {
+  display: flex;
+  justify-content: end;
+  .submitBtn {
+    padding: 12px 24px;
+    color: $bg-1;
+    background-color: rgb(57, 161, 230);
+    border: none;
+    border-radius: 999px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
 }
 </style>

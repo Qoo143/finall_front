@@ -35,3 +35,8 @@ declare module 'three/examples/jsm/loaders/MTLLoader.js' {
   }
 }
 
+// 支援 v-md-editor 模組
+declare module '@kangc/v-md-editor';
+declare module '@kangc/v-md-editor/lib/theme/github.js';
+
+

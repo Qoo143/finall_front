@@ -1,5 +1,5 @@
 <template>
-  <div class="image-upload-wrapper">
+  <div class="image-upload-wrapper" ref="scrollWrapper">
     <!-- 上傳按鈕 -->
     <label class="upload-upload-box">
       <input
@@ -33,6 +33,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted, onBeforeUnmount } from "vue";
+
 interface UploadImage {
   file: File;
   isMain: boolean;
@@ -69,19 +71,51 @@ function setAsMain(index: number) {
 function getPreviewUrl(file: File) {
   return URL.createObjectURL(file);
 }
+//----------<<滾動邏輯>>----------
+const scrollWrapper = ref<HTMLElement | null>(null);
+
+function handleWheelScroll(e: WheelEvent) {
+  if (!scrollWrapper.value) return;
+  if (e.deltaY !== 0) {
+    e.preventDefault(); // 阻止預設垂直滾動
+    scrollWrapper.value.scrollLeft += e.deltaY; // 改為水平捲動
+  }
+}
+
+onMounted(() => {
+  if (scrollWrapper.value) {
+    scrollWrapper.value.addEventListener("wheel", handleWheelScroll, {
+      passive: false,
+    });
+  }
+});
+
+onBeforeUnmount(() => {
+  if (scrollWrapper.value) {
+    scrollWrapper.value.removeEventListener("wheel", handleWheelScroll);
+  }
+});
+//----------<<滾動邏輯>>----------
 </script>
 
 <style scoped lang="scss">
 .image-upload-wrapper {
   display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  align-items: flex-start;
+  flex-wrap: nowrap; // 禁止換行
+  overflow-x: auto; // 啟用水平滾動
+  gap: 16px; // 圖片間距
+  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none; // IE / Edge
+
+  &::-webkit-scrollbar {
+    display: none; // Chrome / Safari / Edge
+  }
 }
 
 .upload-upload-box {
-  width: 160px;
-  height: 160px;
+  flex: 0 0 auto; // 不要自動縮放
+  width: 120px;
+  height: 120px;
   border: 2px dashed #ccc;
   border-radius: 8px;
   display: flex;
@@ -105,8 +139,8 @@ function getPreviewUrl(file: File) {
 
 .img-box {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 120px;
+  height: 120px;
 }
 
 .preview-img {

@@ -1,6 +1,9 @@
 <template>
   <div class="product-model-upload layout">
-    <!-- 左側：上傳 -->
+    <div class="headEdit">
+      <div class="contentEdit">3D模型上傳區</div>
+    </div>
+    <!-- 上傳 -->
     <div class="upload-side">
       <div class="upload-group">
         <label class="upload-label">GLB / GLTF 模型</label>
@@ -12,10 +15,10 @@
         />
       </div>
 
-      <button class="save-button" @click="saveCamera">保存視覺</button>
+      <button class="save-button" @click="saveCamera">保存視角</button>
     </div>
 
-    <!-- 右側：Canvas 預覽 -->
+    <!-- Canvas 預覽 -->
     <div class="preview-side">
       <div class="preview-wrapper">
         <canvas
@@ -229,60 +232,31 @@ function saveCamera() {
 <style scoped lang="scss">
 .layout {
   display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  max-width: 1000px;
-  margin: 0 auto;
-
-  @media (max-width: 900px) {
-    flex-direction: column;
-  }
-}
-
-.upload-side {
-  flex: 0 0 30%;
-  display: flex;
   flex-direction: column;
-  gap: 14px;
-  min-width: 240px;
+  width: 100%;
 
-  @media (max-width: 900px) {
-    width: 100%;
-  }
-}
+  .headEdit {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
 
-.preview-side {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  @media (max-width: 900px) {
-    width: 100%;
+    .contentEdit {
+      font-size: 24px;
+      color: $primary-b-d;
+      font-weight: 600;
+    }
   }
 }
 
 .preview-wrapper {
   position: relative;
   width: 100%;
-  min-width: 400px;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 2/1;
   background-color: #f2f2f2;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
-
-  @media (max-width: 900px) {
-    min-width: 0;
-  }
-}
-
-.preview-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
 }
 
 .preview-placeholder {
@@ -298,19 +272,40 @@ function saveCamera() {
   background: linear-gradient(to bottom right, #fafafa, #f2f2f2);
 }
 
-.save-button {
-  padding: 6px 16px;
-  background-color: #e5f6f0;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
-  border-radius: 8px;
+.upload-side {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 16px;
+  margin-bottom: 16px;
+}
+
+.upload-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upload-label {
   font-size: 14px;
   font-weight: 500;
+  color: #333;
+}
+
+.save-button {
+  height: 40px;
+  width: 80px;
+  background-color: $primary-b-ll;
+  color: $primary-b-d;
+  border: 1px solid $primary-b-d;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: #d1fae5;
+    background-color: $primary-b-l;
   }
 }
 </style>

@@ -50,7 +50,7 @@ import Headpart from "@/views/products/components/Headpart.vue";
 
       .content {
         flex: 1;
-        padding: 16px 24px 24px 24px;
+        padding: 16px 24px 16px 24px;
         overflow-y: auto;
       }
     }
