@@ -1,7 +1,8 @@
 import instance from "@/http/index";
+import type { ProductApiResponse } from "@/types/productApiResponse";
 
 // 取得商品資料
-export function getProduct(id: string) {
+export function getProduct(id: string): Promise<{ data: ProductApiResponse }> {
   return instance({
     url: `/products/${id}`,
     method: "GET",

@@ -48,7 +48,7 @@ import ProductSubmitBar from "./components/ProductSubmitBar.vue";
 import ProductDescription from "./components/ProductDescription.vue";
 
 import type { ProductData } from "@/types/product"; //大資料物件ts
-
+import { log } from "three/src/nodes/TSL.js";
 // --------------------<<狀態管理>>--------------------
 const route = useRoute();
 const isEditMode = computed(() => !!route.params.id); //監測有沒有動態id
@@ -79,46 +79,38 @@ const productData = ref<ProductData>({
 // --------------------🔃 初始化資料--------------------
 //若是編輯模式則起動渲染帶入資料
 onMounted(() => {
-  if (isEditMode.value) fetchProduct(route.params.id as string);
+  if (isEditMode.value) {
+    fetchProduct(route.params.id as string);
+  }
 });
 
 const fetchProduct = async (id: string) => {
   try {
-    const res = await getProduct(id);
-    const data = res.data.data;
+    const { data } = await getProduct(id); // 已經是 ProductData 格式
+    console.log(data);
 
-    const tags = data.tags || [];
-
+    // ✅ basicInfo 每個欄位手動對應
     productData.value.basicInfo = {
-      name: data.name,
-      price: data.price,
-      stock: data.stock,
-      isListed: data.status === 1,
-      tagIds: tags.map((t: any) => t.id),
-      tagNames: tags.map((t: any) => t.name),
-      categoryId: data.category_id,
-      description: data.description || "",
+      name: data.basicInfo.name,
+      price: data.basicInfo.price,
+      stock: data.basicInfo.stock,
+      isListed: data.basicInfo.isListed,
+      tagIds: data.basicInfo.tagIds,
+      tagNames: data.basicInfo.tagNames,
+      categoryId: data.basicInfo.categoryId,
+      description: data.basicInfo.description || "",
     };
 
-    productData.value.model = {
-      glb: null, // 編輯時不重新載入檔案本體（除非支援 URL -> File）
-      camera: data.model_camera || {
-        position: { x: 0, y: 0, z: 0 },
-        target: { x: 0, y: 0, z: 0 },
-      },
-    };
+    // ✅ images 賦值（包含 id）
+    productData.value.images = Array.isArray(data.images) ? data.images : [];
 
-    productData.value.images = (data.images || []).map((img: any) => ({
-      file: img.url, // 若你要回傳為 URL 顯示預覽（不上傳新檔）
-      isMain: img.is_main === 1,
-    }));
+    // ✅ model 賦值（glb 預設 null，camera 直接覆蓋）
+    productData.value.model.glb = null;
+    productData.value.model.camera = data.model.camera;
 
-    // ---測試
-    console.log("從 API 拿到資料：", data);
-    console.log("填入後的 productData：", productData.value);
-    // ---測試
+    console.log("✅ 成功載入 productData", productData.value);
   } catch (err) {
-    console.error("載入商品失敗", err);
+    console.error("❌ 載入商品資料失敗", err);
   }
 };
 
@@ -142,7 +134,7 @@ const handleSubmit = async () => {
     });
 
     // ✅ 圖片（只傳 File）
-    images.forEach((img:any) => {
+    images.forEach((img: any) => {
       if (img.file instanceof File) {
         formData.append("images", img.file);
         formData.append("is_main_flags[]", img.isMain ? "1" : "0");
