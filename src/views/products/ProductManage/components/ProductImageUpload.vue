@@ -23,7 +23,7 @@
         <input
           type="radio"
           name="main-image"
-          :checked="img.isMain"
+          :checked="img.is_main"
           @change="setAsMain(index)"
         />
         主圖
@@ -37,8 +37,8 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 
 interface UploadImage {
   id: number;
-  image_url: string;
-  is_main: boolean;
+  file: string | File;
+  is_main: boolean | number;
 }
 
 const model: any = defineModel<UploadImage[]>({ required: true });
@@ -48,29 +48,61 @@ function handleUpload(e: Event) {
   if (files) {
     const newItems = Array.from(files).map((file, idx) => ({
       file,
-      isMain: model.value.length === 0 && idx === 0,
+      is_main: model.value.length === 0 && idx === 0,
     }));
     model.value.push(...newItems);
   }
 }
-
+//刪除圖片
 function removeImage(index: number) {
-  const wasMain = model.value[index].isMain;
+  const img = model.value[index];
+  
+  // 記錄被刪除的圖片ID（如果有）
+  const deletedId = img.id;
+  
+  // 檢查是否是主圖
+  const wasMain = img.is_main;
+  
+  // 從陣列中刪除
   model.value.splice(index, 1);
-
+  
+  // 如果刪除的是主圖且還有其他圖片，則將第一張設為主圖
   if (wasMain && model.value.length > 0) {
-    model.value[0].isMain = true;
+    model.value[0].is_main = true;
   }
+  
+  // 這裡不需要 emit 事件
 }
 
+//設置主圖
 function setAsMain(index: number) {
   model.value.forEach((img: any, i: any) => {
-    img.isMain = i === index;
+    img.is_main = i === index;
   });
 }
 
-function getPreviewUrl(file: string) {
-  return URL.createObjectURL(file);
+//預覽圖片(圖源可能為後端str，也可能為前端用戶上傳)
+function getPreviewUrl(file: string | File): string {
+  console.log("處理圖片URL:", file);
+
+  // 如果是File對象，使用createObjectURL
+  if (file instanceof File) {
+    return URL.createObjectURL(file);
+  }
+
+  // 如果是字符串URL
+  if (typeof file === "string") {
+    // 如果是相對路徑，添加基礎URL
+    if (file.startsWith("/")) {
+      const url = `http://127.0.0.1:3007${file}`; // 使用你的API服務器地址
+      console.log("完整URL:", url);
+      return url;
+    }
+    return file;
+  }
+
+  // 預設情況
+  return "";
 }
 //----------<<滾動邏輯>>----------
 const scrollWrapper = ref<HTMLElement | null>(null);
@@ -84,6 +116,11 @@ function handleWheelScroll(e: WheelEvent) {
 }
 
 onMounted(() => {
+  console.log("圖片數據:", model.value);
+  if (model.value && model.value.length > 0) {
+    console.log("第一張圖片:", model.value[0]);
+    console.log("第一張圖片的file屬性:", model.value[0].file);
+  }
   if (scrollWrapper.value) {
     scrollWrapper.value.addEventListener("wheel", handleWheelScroll, {
       passive: false,

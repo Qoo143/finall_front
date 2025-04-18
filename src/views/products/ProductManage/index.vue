@@ -52,6 +52,9 @@ import type { ProductData } from "@/types/product"; //大資料物件ts
 const route = useRoute();
 const isEditMode = computed(() => !!route.params.id); //監測有沒有動態id
 
+// 在 fetchProduct 後記錄原始圖片ID
+const originalImageIds = ref<number[]>([]);
+
 //大資料物件
 const productData = ref<ProductData>({
   basicInfo: {
@@ -89,50 +92,59 @@ const fetchProduct = async (id: string) => {
     const { data } = await getProduct(id);
     console.log("API返回的完整數據:", JSON.stringify(data, null, 2));
 
+    // 記錄原始圖片ID
+    if (Array.isArray(data.images)) {
+      originalImageIds.value = data.images.map(img => img.id).filter(id => id);
+    }
+
     // 確保每個屬性都正確對應，並進行必要的類型轉換
     productData.value = {
       basicInfo: {
-        id: data.basicInfo.id,
-        name: data.basicInfo?.name ?? "", // 使用空值合併運算符
-        price: data.basicInfo?.price ?? 0, // 如果值為 null 或 undefined，則使用預設值 0
+        id: data.basicInfo?.id ?? null,
+        name: data.basicInfo?.name ?? "",
+        price: Number(data.basicInfo?.price) ?? 0,
         stock: Number(data.basicInfo?.stock) ?? 0,
-        is_active: Boolean(data.basicInfo?.is_active), // Boolean 轉換已經處理 null/undefined
+        is_active: Boolean(data.basicInfo?.is_active),
         tagIds: Array.isArray(data.basicInfo?.tagIds)
           ? data.basicInfo.tagIds
           : [],
         tagNames: Array.isArray(data.basicInfo?.tagNames)
           ? data.basicInfo.tagNames
           : [],
-        category_id: data.basicInfo?.category_id ?? null, // 如果分類ID不存在，則為 null
-        description: data.basicInfo?.description ?? "", // 如果描述不存在，則為空字串
+        category_id: data.basicInfo?.category_id ?? null, // 注意字段名转换
+        description: data.basicInfo?.description ?? "",
       },
-      model: {
-        glb: null, // 前端通常不會從 API 接收文件對象，所以設為 null
-        camera: {
-          position: {
-            x: 0, // 使用可選鏈和空值合併確保安全存取
-            y: 0,
-            z: 0,
-          },
-          target: {
-            x: 0,
-            y: 0,
-            z: 0,
-          },
-        },
-      },
+      // 如果model为null，整个model属性设为null
+      model: data.model
+        ? {
+            glb: data.model.model_url ?? null,
+            camera: {
+              position: {
+                x: data.model.camera?.position?.x ?? 0,
+                y: data.model.camera?.position?.y ?? 0,
+                z: data.model.camera?.position?.z ?? 0,
+              },
+              target: {
+                x: data.model.camera?.target?.x ?? 0,
+                y: data.model.camera?.target?.y ?? 0,
+                z: data.model.camera?.target?.z ?? 0,
+              },
+            },
+          }
+        : null,
+      // 将API返回的image_url映射到file字段
       images: Array.isArray(data.images)
         ? data.images.map((img) => ({
-            id: img.id ?? 0, // 使用空值合併運算符
-            image_url: img.image_url ?? null,
-            is_main: Boolean(img.is_main),
+            id: img.id ?? 0,
+            file: img.file ?? "", // 将image_url值赋给file
+            is_main: img.is_main, // 将number转为boolean
           }))
         : [],
     };
 
-    console.log("✅ 成功載入 productData", productData.value);
+    console.log("✅ 成功加載 productData", productData.value);
   } catch (err) {
-    console.error("❌ 載入商品資料失敗", err);
+    console.error("❌ 加載商品資料失敗", err);
   }
 };
 
@@ -146,7 +158,7 @@ const handleSubmit = async () => {
     formData.append("name", basicInfo.name);
     formData.append("price", basicInfo.price.toString());
     formData.append("stock", basicInfo.stock.toString());
-    formData.append("status", basicInfo.is_active ? "1" : "0");
+    formData.append("is_active", basicInfo.is_active ? "1" : "0"); // 確保欄位名稱與後端一致
     formData.append("category_id", String(basicInfo.category_id));
     formData.append("description", basicInfo.description || "");
 
@@ -155,30 +167,62 @@ const handleSubmit = async () => {
       formData.append("tag_ids[]", String(id));
     });
 
-    // ✅ 圖片（只傳 File）
-    images.forEach((img: any) => {
-      if (img.image_url) {
-        formData.append("images", img.file);
-        formData.append("is_main_flags[]", img.isMain ? "1" : "0");
+    // ✅ 圖片處理
+    if (isEditMode.value) {
+      // 1. 確定目前存在的圖片ID
+      const currentImageIds = images
+        .filter(img => typeof img.file === 'string' && img.id)
+        .map(img => img.id);
+      
+      // 2. 計算被刪除的圖片ID（在原始列表中但不在當前列表中的ID）
+      const deletedImageIds = originalImageIds.value.filter(
+        id => !currentImageIds.includes(id)
+      );
+
+      // 3. 保留的原有圖片 - 需要傳 ID 和 is_main 狀態
+      if (currentImageIds.length > 0) {
+        const existingImagesData = images
+          .filter(img => typeof img.file === 'string' && img.id)
+          .map(img => ({ 
+            id: img.id, 
+            is_main: img.is_main ? 1 : 0 
+          }));
+          
+        formData.append("existing_image_ids", JSON.stringify(existingImagesData));
       }
+      
+      // 4. 被刪除的圖片ID
+      if (deletedImageIds.length > 0) {
+        formData.append("deleted_image_ids", JSON.stringify(deletedImageIds));
+      }
+    }
+    
+    // 5. 新上傳的圖片 - 傳 File 對象和 is_main 狀態
+    const newImages = images.filter(img => img.file instanceof File);
+    newImages.forEach((img, index) => {
+      formData.append("images", img.file); // 使用一致的欄位名稱
+      formData.append(`is_main_flags[${index}]`, img.is_main ? "1" : "0");
     });
 
     // ✅ 模型（選填）
-    if (model && model.glb) {
-      formData.append("glb", model.glb);
-    }
-    if (model && model.camera) {
-      formData.append("camera_position", JSON.stringify(model.camera.position));
-      formData.append("camera_target", JSON.stringify(model.camera.target));
-    }
-    // 檢查傳值
-    // for (const [key, value] of formData.entries()) {
-    //   console.log("📦 送出資料：", key, value);
+    // if (model && model.glb instanceof File) {
+    //   formData.append("model", model.glb);
+      
+    //   if (model.camera) {
+    //     formData.append("camera_position", JSON.stringify(model.camera.position));
+    //     formData.append("camera_target", JSON.stringify(model.camera.target));
+    //   }
     // }
+    
+    // 檢查傳值
+    for (const [key, value] of formData.entries()) {
+      console.log("📦 送出資料：", key, value);
+    }
+    
     // ✅ 呼叫 API
     if (isEditMode.value) {
       await updateProduct(route.params.id as string, formData);
-      alert("✅ 商品更新成功！");
+      ElMessage.success("商品更新成功！");
     } else {
       await createProduct(formData);
       ElMessage.success("商品新增成功！");

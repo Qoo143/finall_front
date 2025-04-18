@@ -1,3 +1,4 @@
+//three.js存視角格式
 export interface Vector3 {
   x: number;
   y: number;
@@ -17,7 +18,7 @@ export interface ProductData {
     description: string; //涵蓋空字串
   };
   model: {
-    glb: string | null; //? 確認是否只傳連結
+    glb: string;
     camera: {
       position: Vector3;
       target: Vector3;
@@ -25,7 +26,7 @@ export interface ProductData {
   } | null;//[]還需確認格式
   images: {
     id: number;//刪除圖片用
-    image_url: string; // ✅ 回傳為圖片 URL
+    file: string | File; // 既可以是URL字串(从后端獲取)，也可以是File物件(前端上傳)
     is_main: boolean;
-  }[];// 空陣列代表沒有圖片
+  }[] | [];// 空陣列代表沒有圖片
 }
