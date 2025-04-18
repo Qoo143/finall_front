@@ -94,7 +94,9 @@ const fetchProduct = async (id: string) => {
 
     // 記錄原始圖片ID
     if (Array.isArray(data.images)) {
-      originalImageIds.value = data.images.map(img => img.id).filter(id => id);
+      originalImageIds.value = data.images
+        .map((img) => img.id)
+        .filter((id) => id);
     }
 
     // 確保每個屬性都正確對應，並進行必要的類型轉換
@@ -151,85 +153,98 @@ const fetchProduct = async (id: string) => {
 // --------------------📤 提交資料--------------------
 const handleSubmit = async () => {
   try {
-    const formData: any = new FormData();
-    const { basicInfo, model, images } = productData.value;
+    const formData = new FormData();
+    const { basicInfo, images } = productData.value;
 
-    // ✅ 基本欄位
+    // 1. 基本商品信息 - 简单扁平结构
     formData.append("name", basicInfo.name);
     formData.append("price", basicInfo.price.toString());
     formData.append("stock", basicInfo.stock.toString());
-    formData.append("is_active", basicInfo.is_active ? "1" : "0"); // 確保欄位名稱與後端一致
-    formData.append("category_id", String(basicInfo.category_id));
+    formData.append("is_active", basicInfo.is_active ? "1" : "0");
+    formData.append(
+      "category_id",
+      basicInfo.category_id ? String(basicInfo.category_id) : ""
+    );
     formData.append("description", basicInfo.description || "");
 
-    // ✅ 標籤（陣列）
-    basicInfo.tagIds.forEach((id) => {
-      formData.append("tag_ids[]", String(id));
-    });
+    // 2. 标签IDs - 简单数组结构
+    // 直接传递JSON字符串，避免使用多个同名字段
+    formData.append("tag_ids", JSON.stringify(basicInfo.tagIds));
 
-    // ✅ 圖片處理
+    // 3. 图片处理 - 统一格式
     if (isEditMode.value) {
-      // 1. 確定目前存在的圖片ID
-      const currentImageIds = images
-        .filter(img => typeof img.file === 'string' && img.id)
-        .map(img => img.id);
-      
-      // 2. 計算被刪除的圖片ID（在原始列表中但不在當前列表中的ID）
+      // 3.1 现有图片 - 使用JSON字符串
+      const existingImagesData = images
+        .filter((img) => typeof img.file === "string" && img.id)
+        .map((img) => ({
+          id: img.id,
+          is_main: img.is_main ? 1 : 0,
+          file: img.file, // 保存URL，以便后端参考
+        }));
+
+      formData.append("existing_images", JSON.stringify(existingImagesData));
+
+      // 3.2 要删除的图片IDs
+      const currentImageIds = existingImagesData.map((img) => img.id);
       const deletedImageIds = originalImageIds.value.filter(
-        id => !currentImageIds.includes(id)
+        (id) => !currentImageIds.includes(id)
       );
 
-      // 3. 保留的原有圖片 - 需要傳 ID 和 is_main 狀態
-      if (currentImageIds.length > 0) {
-        const existingImagesData = images
-          .filter(img => typeof img.file === 'string' && img.id)
-          .map(img => ({ 
-            id: img.id, 
-            is_main: img.is_main ? 1 : 0 
-          }));
-          
-        formData.append("existing_image_ids", JSON.stringify(existingImagesData));
-      }
-      
-      // 4. 被刪除的圖片ID
-      if (deletedImageIds.length > 0) {
-        formData.append("deleted_image_ids", JSON.stringify(deletedImageIds));
-      }
+      formData.append("deleted_image_ids", JSON.stringify(deletedImageIds));
     }
-    
-    // 5. 新上傳的圖片 - 傳 File 對象和 is_main 狀態
-    const newImages = images.filter(img => img.file instanceof File);
+
+    // 3.3 新上传的图片 - 统一命名
+    const newImages = images.filter((img) => img.file instanceof File);
+
+    // 将新图片信息一次性传递，避免多个is_main标记
+    const newImagesInfo = newImages.map((img) => ({
+      is_main: img.is_main ? 1 : 0,
+    }));
+    formData.append("new_images_info", JSON.stringify(newImagesInfo));
+
+    // 添加所有新图片文件
     newImages.forEach((img, index) => {
-      formData.append("images", img.file); // 使用一致的欄位名稱
-      formData.append(`is_main_flags[${index}]`, img.is_main ? "1" : "0");
+      // 使用索引区分多个图片文件
+      formData.append(`image_${index}`, img.file);
     });
 
-    // ✅ 模型（選填）
-    // if (model && model.glb instanceof File) {
-    //   formData.append("model", model.glb);
-      
-    //   if (model.camera) {
-    //     formData.append("camera_position", JSON.stringify(model.camera.position));
-    //     formData.append("camera_target", JSON.stringify(model.camera.target));
-    //   }
-    // }
-    
-    // 檢查傳值
-    for (const [key, value] of formData.entries()) {
-      console.log("📦 送出資料：", key, value);
-    }
-    
-    // ✅ 呼叫 API
+    // 调试信息
+    console.log("表单基本信息:", {
+      name: basicInfo.name,
+      price: basicInfo.price,
+      stock: basicInfo.stock,
+      is_active: basicInfo.is_active ? "1" : "0",
+      category_id: basicInfo.category_id || "",
+      tag_ids: JSON.stringify(basicInfo.tagIds),
+      existing_images: formData.get("existing_images"),
+      deleted_image_ids: formData.get("deleted_image_ids"),
+      new_images_count: newImages.length,
+    });
+
+    // 调用API
     if (isEditMode.value) {
-      await updateProduct(route.params.id as string, formData);
-      ElMessage.success("商品更新成功！");
-    } else {
-      await createProduct(formData);
-      ElMessage.success("商品新增成功！");
+      try {
+        const response:any = await updateProduct(
+          route.params.id as string,
+          formData
+        );
+        console.log("完整API响应:", response);
+
+        // 验证响应内容
+        if (response.code === 0) {
+          // 假设code=0表示成功
+          ElMessage.success("商品更新成功！");
+        } else {
+          ElMessage.warning(`操作返回：${response.message || "未知状态"}`);
+        }
+      } catch (err) {
+        console.error("❌ 商品提交失败", err);
+        ElMessage.error("提交失败，请稍后再试");
+      }
     }
   } catch (err) {
-    console.error("❌ 商品提交失敗", err);
-    ElMessage.error("提交失敗，請稍後再試");
+    console.error("商品提交失败", err);
+    ElMessage.error("提交失败，请稍后再试");
   }
 };
 </script>
