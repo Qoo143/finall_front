@@ -50,7 +50,7 @@
 
     <!-- 分類（下拉選單） -->
     <el-form-item label="商品分類">
-      <el-select v-model="model.categoryId" placeholder="請選擇分類" clearable>
+      <el-select v-model="model.category_id" placeholder="請選擇分類" clearable>
         <el-option
           v-for="cat in allCategories"
           :key="cat.id"
@@ -83,7 +83,7 @@ const model = defineModel<{
   stock: number;
   tagIds: number[];
   tagNames: string[];
-  categoryId: number | null;
+  category_id: number | null;
 }>({ required: true });
 
 // 透過 props 傳入是否為創建模式

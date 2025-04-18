@@ -48,7 +48,6 @@ import ProductSubmitBar from "./components/ProductSubmitBar.vue";
 import ProductDescription from "./components/ProductDescription.vue";
 
 import type { ProductData } from "@/types/product"; //大資料物件ts
-import { log } from "three/src/nodes/TSL.js";
 // --------------------<<狀態管理>>--------------------
 const route = useRoute();
 const isEditMode = computed(() => !!route.params.id); //監測有沒有動態id
@@ -56,17 +55,18 @@ const isEditMode = computed(() => !!route.params.id); //監測有沒有動態id
 //大資料物件
 const productData = ref<ProductData>({
   basicInfo: {
+    id: null,
     name: "",
     price: 0,
     stock: 0,
-    isListed: false, //預設不上架
+    is_active: false, //預設不上架
     tagIds: [],
     tagNames: [],
-    categoryId: null,
+    category_id: null,
     description: "",
   },
   model: {
-    glb: null,
+    glb: "",
     camera: {
       position: { x: 0, y: 0, z: 0 },
       target: { x: 0, y: 0, z: 0 },
@@ -86,27 +86,49 @@ onMounted(() => {
 
 const fetchProduct = async (id: string) => {
   try {
-    const { data } = await getProduct(id); // 已經是 ProductData 格式
-    console.log(data);
+    const { data } = await getProduct(id);
+    console.log("API返回的完整數據:", JSON.stringify(data, null, 2));
 
-    // ✅ basicInfo 每個欄位手動對應
-    productData.value.basicInfo = {
-      name: data.basicInfo.name,
-      price: data.basicInfo.price,
-      stock: data.basicInfo.stock,
-      isListed: data.basicInfo.isListed,
-      tagIds: data.basicInfo.tagIds,
-      tagNames: data.basicInfo.tagNames,
-      categoryId: data.basicInfo.categoryId,
-      description: data.basicInfo.description || "",
+    // 確保每個屬性都正確對應，並進行必要的類型轉換
+    productData.value = {
+      basicInfo: {
+        id: data.basicInfo.id,
+        name: data.basicInfo?.name ?? "", // 使用空值合併運算符
+        price: data.basicInfo?.price ?? 0, // 如果值為 null 或 undefined，則使用預設值 0
+        stock: Number(data.basicInfo?.stock) ?? 0,
+        is_active: Boolean(data.basicInfo?.is_active), // Boolean 轉換已經處理 null/undefined
+        tagIds: Array.isArray(data.basicInfo?.tagIds)
+          ? data.basicInfo.tagIds
+          : [],
+        tagNames: Array.isArray(data.basicInfo?.tagNames)
+          ? data.basicInfo.tagNames
+          : [],
+        category_id: data.basicInfo?.category_id ?? null, // 如果分類ID不存在，則為 null
+        description: data.basicInfo?.description ?? "", // 如果描述不存在，則為空字串
+      },
+      model: {
+        glb: null, // 前端通常不會從 API 接收文件對象，所以設為 null
+        camera: {
+          position: {
+            x: 0, // 使用可選鏈和空值合併確保安全存取
+            y: 0,
+            z: 0,
+          },
+          target: {
+            x: 0,
+            y: 0,
+            z: 0,
+          },
+        },
+      },
+      images: Array.isArray(data.images)
+        ? data.images.map((img) => ({
+            id: img.id ?? 0, // 使用空值合併運算符
+            image_url: img.image_url ?? null,
+            is_main: Boolean(img.is_main),
+          }))
+        : [],
     };
-
-    // ✅ images 賦值（包含 id）
-    productData.value.images = Array.isArray(data.images) ? data.images : [];
-
-    // ✅ model 賦值（glb 預設 null，camera 直接覆蓋）
-    productData.value.model.glb = null;
-    productData.value.model.camera = data.model.camera;
 
     console.log("✅ 成功載入 productData", productData.value);
   } catch (err) {
@@ -124,8 +146,8 @@ const handleSubmit = async () => {
     formData.append("name", basicInfo.name);
     formData.append("price", basicInfo.price.toString());
     formData.append("stock", basicInfo.stock.toString());
-    formData.append("status", basicInfo.isListed ? "1" : "0");
-    formData.append("category_id", String(basicInfo.categoryId));
+    formData.append("status", basicInfo.is_active ? "1" : "0");
+    formData.append("category_id", String(basicInfo.category_id));
     formData.append("description", basicInfo.description || "");
 
     // ✅ 標籤（陣列）
@@ -135,17 +157,17 @@ const handleSubmit = async () => {
 
     // ✅ 圖片（只傳 File）
     images.forEach((img: any) => {
-      if (img.file instanceof File) {
+      if (img.image_url) {
         formData.append("images", img.file);
         formData.append("is_main_flags[]", img.isMain ? "1" : "0");
       }
     });
 
     // ✅ 模型（選填）
-    if (model.glb) {
+    if (model && model.glb) {
       formData.append("glb", model.glb);
     }
-    if (model.camera) {
+    if (model && model.camera) {
       formData.append("camera_position", JSON.stringify(model.camera.position));
       formData.append("camera_target", JSON.stringify(model.camera.target));
     }

@@ -37,8 +37,8 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 
 interface UploadImage {
   id: number;
-  file: string;
-  isMain: boolean;
+  image_url: string;
+  is_main: boolean;
 }
 
 const model: any = defineModel<UploadImage[]>({ required: true });
@@ -69,7 +69,7 @@ function setAsMain(index: number) {
   });
 }
 
-function getPreviewUrl(file: File) {
+function getPreviewUrl(file: string) {
   return URL.createObjectURL(file);
 }
 //----------<<滾動邏輯>>----------
