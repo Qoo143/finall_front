@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import SidebarNav from "@/views/products/components/SidebarNav.vue";
 import Breadcrumb from "@/views/products/components/Breadcrumb.vue";
-import Headpart from "@/views/products/components/Headpart.vue";
+import Headpart from "@/components/Headpart.vue";
 </script>
 
 <style scoped lang="scss">
