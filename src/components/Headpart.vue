@@ -9,14 +9,28 @@
         <el-icon class="user-icon" :size="24"><UserFilled /></el-icon>
         <p>Qoo143</p>
       </div>
-      <button class="switch" @click="goTo">前往前台</button>
+      <button class="switch" @click="goTo">
+        {{ isHome ? "前往後台" : "前往前台" }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useRouter, useRoute } from "vue-router";
+import { computed } from "vue";
+
+const router = useRouter(); // 切換頁面用
+const route = useRoute(); // 判斷當前頁面用
+
+const isHome = computed(() => route.path.startsWith("/home")); // 判斷是否在前台
+
 const goTo = () => {
-  console.log("123");
+  if (isHome.value) {
+    router.push("/products");
+  } else {
+    router.push("/home");
+  }
 };
 </script>
 
@@ -26,7 +40,7 @@ const goTo = () => {
   height: 100%;
   display: flex;
   align-items: center;
-  padding: 40px 24px;
+  padding: 10px 24px;
   justify-content: space-between;
 
   .logo {
