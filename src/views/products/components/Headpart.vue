@@ -9,13 +9,13 @@
         <el-icon class="user-icon" :size="24"><UserFilled /></el-icon>
         <p>Qoo143</p>
       </div>
-      <button class="switch" @click="goto">前往前台</button>
+      <button class="switch" @click="goTo">前往前台</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const goto = () => {
+const goTo = () => {
   console.log("123");
 };
 </script>
