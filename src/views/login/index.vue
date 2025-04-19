@@ -3,7 +3,7 @@
   <div class="common-wrapper">
     <!-- 內容 -->
     <div class="common-content">
-      <!-- 登入註冊切換盒子 -->
+      <!-- 登入註冊，切換盒子 -->
       <div class="auth-wrapper">
         <!-- tab切換 -->
         <div class="tabs">
