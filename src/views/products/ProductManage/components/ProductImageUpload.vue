@@ -34,43 +34,48 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
+import type { ImageData } from "@/types/productApiResponse"; //圖片格式
 
-interface UploadImage {
-  id: number;
-  file: string | File;
-  is_main: boolean | number;
-}
+const model: any = defineModel<ImageData[]>({ required: true });
 
-const model: any = defineModel<UploadImage[]>({ required: true });
-
+/*
+ ** 選擇圖片後觸發 => 將照片資料加到v-model
+ */
 function handleUpload(e: Event) {
+  //拿到使用者選的所有檔案（FileList）
   const files = (e.target as HTMLInputElement).files;
+  //如果獲取到的格式是file
   if (files) {
+    //將圖片包裝成固定格式
     const newItems = Array.from(files).map((file, idx) => ({
-      file,
-      is_main: model.value.length === 0 && idx === 0,
+      id: 0, // 新增圖片預設 id = 0
+      file, // 是 File 物件，用來顯示預覽圖
+      is_main: model.value.length === 0 && idx === 0, // 第一張圖當主圖
     }));
+    //全部加進去productData的圖片列表
     model.value.push(...newItems);
   }
 }
-//刪除圖片
+/*
+ ** 刪除圖片
+ */
 function removeImage(index: number) {
   const img = model.value[index];
-  
+
   // 記錄被刪除的圖片ID（如果有）
   const deletedId = img.id;
-  
+
   // 檢查是否是主圖
   const wasMain = img.is_main;
-  
+
   // 從陣列中刪除
   model.value.splice(index, 1);
-  
+
   // 如果刪除的是主圖且還有其他圖片，則將第一張設為主圖
   if (wasMain && model.value.length > 0) {
     model.value[0].is_main = true;
   }
-  
+
   // 這裡不需要 emit 事件
 }
 

@@ -1,35 +1,21 @@
-import type { Vector3 } from "@/types/product";
-
-
-// src/types/productApiResponse.ts
 
 export interface ImageData {
-  id: number;
-  file: string; // 後端返回URL
-  is_main: boolean; // 後端返回布林值
+  id: number | null;
+  file: string | File; // 後端返回URL
+  is_main: number; //1才是主圖
 }
 
-export interface Camera {
-  position: Vector3;
-  target: Vector3;
-}
-export interface ModelData {
-  model_url: string;
-  camera: Camera;
-}
-
+//傳回格式
 export interface ProductApiResponse {
-  basicInfo: {
-    id: number;
-    name: string;
-    price: number;
-    stock: number;
-    is_active: boolean;
-    tagIds: number[],
-    tagNames: string[],
-    category_id: number | null;
-    description: string;
-  }
+  id: number;
+  name: string;
+  price: number;
+  stock: number;
+  is_active: number;
+  tagIds: number[],
+  tagNames: string[],
+  category_id: number;
+  description: string;
   images: ImageData[];
-  model?: ModelData | null;
+  model: string | null;
 }

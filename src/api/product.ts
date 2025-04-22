@@ -32,3 +32,14 @@ export function updateProduct(id: string, data: FormData) {
     },
   });
 }
+
+//取得所有商品標籤
+export function getTags() {
+  return instance({
+    url: `/tags`,
+    method: "GET",
+    headers: {
+      // "Content-Type": "multipart/form-data", // ✅ 同上
+    },
+  });
+}

@@ -92,10 +92,6 @@ const props = defineProps<{ createMode: boolean }>();
 // 所有分類資料
 const allCategories = ref<{ id: number; name: string }[]>([]);
 
-// 儲存標籤變更用（父層會將 tagNames 轉回 tagIds）
-const stockDelta = ref<number>(1);
-const stockActionType = ref<"add" | "sub">("add");
-
 // 取得分類資料
 onMounted(async () => {
   const res = await axios.get("http://127.0.0.1:3007/categories");
@@ -103,6 +99,8 @@ onMounted(async () => {
 });
 
 // 點擊更改庫存（僅在編輯模式下）
+const stockDelta = ref<number>(1);
+const stockActionType = ref<"add" | "sub">("add");
 function applyStockChange() {
   const delta =
     stockActionType.value === "add" ? stockDelta.value : -stockDelta.value;

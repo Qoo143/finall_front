@@ -2,45 +2,52 @@
   <div class="productDescription">
     <div class="headEdit">
       <div class="contentEdit">商品訊息描述</div>
+      <!-- 使用 Element Plus 的 el-input -->
+      <el-input
+        v-model="model.description"
+        placeholder="請輸入商品描述"
+        type="textarea"
+        :rows="6"
+        resize="none"
+        class="fullHeight"
+      />
     </div>
-    <!-- 定義好寬高，前台顯示才不會跑版 -->
-
-    <v-md-editor
-      v-model="model.description"
-      :disabled-menus="[]"
-      height="300px"
-      class="markdownEditor"
-      placeholder="在此編寫商品描述"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
-//這邊是md
 const model = <any>defineModel<{ description: string }>();
-
-const previewMode = ref(false); // 切換狀態：true = 預覽、false = 編輯
 </script>
 
 <style scoped lang="scss">
 .productDescription {
   display: flex;
-  flex-direction: column;
   height: 100%;
   width: 100%;
 
   .headEdit {
     width: 100%;
+    height: 100%;
     display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 16px;
+    flex-direction: column;
+
     .contentEdit {
       font-size: 24px;
       color: $primary-b-d;
       font-weight: 600;
+      text-align: center;
+      margin-bottom: 16px;
     }
   }
+}
+// 強制調整 textarea 本體
+.fullHeight {
+  flex: 1;
+  height: 100%;
+}
+:deep(.el-textarea__inner) {
+  font-size: 20px;
+  height: 100%;
+  resize: none;
 }
 </style>
