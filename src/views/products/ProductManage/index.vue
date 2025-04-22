@@ -153,12 +153,10 @@ async function resolveTagIdsFromNames(tagNames: string[]): Promise<number[]> {
     // 	"message": "操作成功",
     // 	"code": 0
     // }
-    const newTags = res.data; //此時newTags是陣列
+    const newTags = res.data.data; //此時newTags是陣列
     allTags.value.push(...newTags); //推入新建標籤之id，是避免同頁編輯重複送出
 
-    const resolveTag = newTags.map((item: any) => {
-      item.id; //此陣列只留id
-    });
+    const resolveTag = newTags.map((item: any) => item.id);
     resolvedIds.push(...resolveTag); //將取得id推入當前商品標籤要擁有的值
   }
   return resolvedIds; //ex:[ 4, 5 ]
