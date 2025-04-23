@@ -76,14 +76,14 @@ import { ref, onMounted, computed } from "vue";
 import { Select } from "@element-plus/icons-vue";
 import axios from "axios";
 
-// 接收來自父層的 productData.basicInfo 綁定
+// 接收來自父層的 productData綁定
 const model = defineModel<{
   name: string;
   price: number;
   stock: number;
   tagIds: number[];
   tagNames: string[];
-  category_id: number | null;
+  category_id: number;
 }>({ required: true });
 
 // 透過 props 傳入是否為創建模式

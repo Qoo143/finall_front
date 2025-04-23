@@ -101,7 +101,12 @@ const getPreviewUrl = (file: string | File): string => {
   if (file instanceof File) return URL.createObjectURL(file);
 
   // 如果是字符串URL(後端需給完整url)
-  if (typeof file === "string") return file;
+  if (typeof file === "string") {
+    // 檢查是否為完整 URL
+    if (file.startsWith("http")) return file;
+    // 如果是相對路徑，添加基礎 URL
+    return `http://localhost:3007${file}`;
+  }
 
   // 預設情況
   return "";
@@ -123,6 +128,8 @@ const handleWheelScroll = (e: WheelEvent) => {
  * 綁定滾動事件
  */
 onMounted(() => {
+  // 檢查初始數據
+  console.log("初始圖片數據:", JSON.stringify(images.value));
   //設置 passive: false 告訴瀏覽器我們需要調用 preventDefault()，這是實現自定義滾動行為的必要設置
   if (scrollWrapper.value) {
     scrollWrapper.value.addEventListener("wheel", handleWheelScroll, {

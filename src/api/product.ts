@@ -30,6 +30,9 @@ export function updateProduct(id: string, data: FormData) {
     headers: {
       "Content-Type": "multipart/form-data", // ✅ 同上
     },
+  }).then(res => {
+    console.log("API原始響應:", JSON.stringify(res.data, null, 2));
+    return res;
   });
 }
 

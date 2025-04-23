@@ -27,7 +27,11 @@
 
     <!-- 提交 -->
     <div class="item submitSection">
-      <ProductSubmitBar :createMode="!isEditMode" :submitFn="handleSubmit" :isSubmitting="isSubmitting"/>
+      <ProductSubmitBar
+        :createMode="!isEditMode"
+        :submitFn="handleSubmit"
+        :isSubmitting="isSubmitting"
+      />
     </div>
   </div>
 </template>
@@ -110,7 +114,7 @@ async function fetchProduct(id: string) {
     model: data.model || null, //null還是""待確認
     images: data.images.map((img: any) => ({
       id: img.id,
-      file: img.image_url,
+      file: img.file,
       is_main: img.is_main,
     })),
   };
@@ -189,10 +193,12 @@ const handleSubmit = async () => {
     info.images.forEach((img, index) => {
       //判斷是否為新上傳
       if (img.file instanceof File) {
-        formData.append(`images[${index}]`, img.file);
+        formData.append(`images[]`, img.file);
+      } else {
+        formData.append(`images[]`, null);
       }
-      formData.append(`image_id[${index}]`, (img.id || 0).toString());
-      formData.append(`image_is_main[${index}]`, img.is_main ? "1" : "0");
+      formData.append(`image_id[]`, (img.id || 0).toString());
+      formData.append(`image_is_main[]`, img.is_main ? "1" : "0");
     });
 
     /**

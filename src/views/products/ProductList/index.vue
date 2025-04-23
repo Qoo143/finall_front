@@ -244,7 +244,6 @@ const products: any = ref<Product[]>([]);
 const loading = ref(false);
 
 //顯示照片邏輯
-const BASE_URL = "http://127.0.0.1:3007";
 const getImageUrl = (relativePath: string) => {
   return `http://127.0.0.1:3007${relativePath}`;
 };
