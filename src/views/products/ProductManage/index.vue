@@ -20,21 +20,21 @@
     <!-- 圖片 -->
     <div class="item imageSection">
       <ProductImageUpload
-        v-model="productData.images"
-        @delete-image-id="handleDeletedImageId"
+        v-model:images="productData.images"
+        v-model:deletedIds="deletedImageIds"
       />
     </div>
 
     <!-- 提交 -->
     <div class="item submitSection">
-      <ProductSubmitBar :createMode="!isEditMode" :submitFn="handleSubmit" />
+      <ProductSubmitBar :createMode="!isEditMode" :submitFn="handleSubmit" :isSubmitting="isSubmitting"/>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 import { ElMessage } from "element-plus";
 
@@ -53,9 +53,11 @@ import {
 import type { ProductData } from "@/types/product";
 
 const route = useRoute();
+const router = useRouter();
 const isEditMode = computed(() => !!route.params.id);
-
-//基礎預設資料 (創建資料帶入)
+/**
+ *  基礎預設資料 (創建資料帶入)
+ */
 const productData = ref<ProductData>({
   id: null,
   name: "",
@@ -69,27 +71,27 @@ const productData = ref<ProductData>({
   model: null,
   images: [],
 });
-
+const isSubmitting = ref(false); //防止重複提交開關
 //----------<<初始準備>>----------
-/*
- **  1-1.若網址帶參數則刷新頁面
- **  1-2.所有標籤資料存到 allTags
+/**
+ *  1-1.若網址帶參數則刷新頁面
+ *  1-2.所有標籤資料存到 allTags
  */
 onMounted(async () => {
   await fetchAllTags();
   if (isEditMode.value) fetchProduct(route.params.id as string);
 });
-/*
- ** 抓標籤fn
+/**
+ *  抓標籤fn
  */
 const allTags = ref<{ id: number; name: string }[]>([]);
 async function fetchAllTags() {
   const res = await getTags();
   allTags.value = res.data || [];
-  console.log("標籤資料 allTags.value 是：", allTags.value);
+  // console.log("標籤資料 allTags.value 是：", allTags.value);//抓錯用
 }
-/*
- ** 帶入商品參數資料fn
+/**
+ *  帶入商品參數資料fn
  */
 async function fetchProduct(id: string) {
   const { data } = await getProduct(id);
@@ -113,19 +115,9 @@ async function fetchProduct(id: string) {
     })),
   };
 }
-/*
- **  2.準備處理刪除照片之cb
- */
-const deletedImageIds = ref<number[]>([]); //存要刪除之圖片id區
-//可推入要刪除照片之id
-const handleDeletedImageId = (id: number) => {
-  if (id) {
-    deletedImageIds.value.push(id);
-  }
-};
 
-/*
- ** 把「使用者輸入的文字標籤」全部轉換成「對應的數字 id」
+/**
+ * 把「使用者輸入的文字標籤」全部轉換成「對應的數字 id」
  */
 async function resolveTagIdsFromNames(tagNames: string[]): Promise<number[]> {
   //將已知tag轉換格式
@@ -161,11 +153,22 @@ async function resolveTagIdsFromNames(tagNames: string[]): Promise<number[]> {
   }
   return resolvedIds; //ex:[ 4, 5 ]
 }
-/*
- **  3.處理FormData資料提交
+/**
+ *  2.準備處理刪除照片之佔存區
+ */
+const deletedImageIds = ref<number[]>([]); //存要刪除之圖片id區
+/**
+ *  3.處理FormData資料提交
  */
 const handleSubmit = async () => {
+  // 如果正在提交中，中斷請求
+  if (isSubmitting.value) {
+    return ElMessage.warning("請勿重複提交");
+  }
   try {
+    // 設置提交狀態
+    isSubmitting.value = true;
+
     const formData: any = new FormData();
     const info = productData.value; //目前v-model綁定值
 
@@ -175,26 +178,30 @@ const handleSubmit = async () => {
     formData.append("is_active", info.is_active ? "1" : "0");
     formData.append("category_id", info.category_id?.toString() || "1");
     formData.append("description", info.description || "");
-
-    // 標籤 (全部清除+全部建立)
+    /**
+     *  1.標籤 (全部清除+全部建立)
+     */
     const tagIds = await resolveTagIdsFromNames(info.tagNames);
     tagIds.forEach((id) => formData.append("tagIds[]", id.toString()));
-
-    // 圖片處理
+    /**
+     *  2.圖片處理
+     */
     info.images.forEach((img, index) => {
+      //判斷是否為新上傳
       if (img.file instanceof File) {
-        //判斷是否為新上傳
         formData.append(`images[${index}]`, img.file);
       }
       formData.append(`image_id[${index}]`, (img.id || 0).toString());
       formData.append(`image_is_main[${index}]`, img.is_main ? "1" : "0");
     });
 
-    // 傳送被刪除的舊圖 id（後端要支援）
+    /**
+     *  2-1.傳送被刪除的舊圖 id(由後端推入)
+     */
     deletedImageIds.value.forEach((id) => {
       formData.append("deleted_image_ids[]", id.toString());
     });
-    //------
+    //------ 確認所有form鍵值對
     for (const pair of formData.entries()) {
       console.log(pair[0], pair[1]);
     }
@@ -203,10 +210,25 @@ const handleSubmit = async () => {
     const res: any = isEditMode.value
       ? await updateProduct(info.id!.toString(), formData)
       : await createProduct(formData);
-
+    /**
+     * 成功
+     */
     if (res.code === 0) {
+      // 1. 顯示成功消息
       ElMessage.success(isEditMode.value ? "商品更新成功" : "商品建立成功");
+      // 2. 清空刪除圖片記錄（防止重複刪除）
+      deletedImageIds.value = [];
+      // 3. 根據模式選擇後續操作
+      if (isEditMode.value) {
+        // 編輯模式：刷新當前商品數據
+        await fetchProduct(info.id!.toString());
+      } else {
+        router.push("/products");
+      }
     } else {
+      /**
+       * 失敗
+       */
       ElMessage.warning(res.message || "操作失敗");
     }
   } catch (err: any) {
@@ -215,6 +237,9 @@ const handleSubmit = async () => {
       console.error("後端回傳錯誤資訊：", err.response.data);
     }
     ElMessage.error("提交失敗，請稍後再試");
+  } finally {
+    // 恢復提交狀態
+    isSubmitting.value = false;
   }
 };
 </script>

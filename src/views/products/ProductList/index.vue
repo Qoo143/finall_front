@@ -45,7 +45,7 @@
       <el-select
         v-model="isActiveValue"
         placeholder="商品狀態"
-        style="width: 160px"
+        style="width: 120px"
       >
         <el-option label="上架中" :value="1" />
         <el-option label="已下架" :value="0" />

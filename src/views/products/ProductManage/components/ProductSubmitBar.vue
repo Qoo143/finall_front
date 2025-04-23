@@ -1,7 +1,7 @@
 <template>
   <div class="inputSection">
     <button class="submitBtn" @click="submitFn?.()">
-      {{ createMode ? "上傳商品" : "保留變更" }}
+      {{ isSubmitting ? "處理中..." : createMode ? "上傳商品" : "保留變更" }}
     </button>
   </div>
 </template>
@@ -9,7 +9,8 @@
 <script setup lang="ts">
 defineProps<{
   createMode: boolean;
-  submitFn?: () => void; // 父層傳入的實際提交函式
+  submitFn?: () => void;
+  isSubmitting?: boolean;
 }>();
 </script>
 

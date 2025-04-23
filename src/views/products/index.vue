@@ -51,7 +51,6 @@ import Headpart from "@/components/Headpart.vue";
       .content {
         flex: 1;
         padding: 16px 24px 16px 24px;
-        overflow-y: auto;
       }
     }
   }
