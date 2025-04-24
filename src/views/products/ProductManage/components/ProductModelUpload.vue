@@ -24,6 +24,7 @@
         <div v-if="!previewUrl" class="preview-placeholder">尚未上傳模型</div>
         <model-viewer
           :src="previewUrl"
+          :key="previewUrl"
           alt="3D模型預覽"
           auto-rotate
           camera-controls
@@ -37,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import "@google/model-viewer";
 
 // 綁定到父組件的值
@@ -55,6 +56,8 @@ const hasModel = computed(() => {
 const previewUrl = computed(() => {
   // 如果有上傳新文件，優先使用新文件預覽
   if (productData.value?.model_file) {
+    console.log("文件", productData.value.model_file);
+
     return URL.createObjectURL(productData.value.model_file);
   }
 
@@ -69,7 +72,9 @@ const previewUrl = computed(() => {
 
   return "";
 });
-
+watch(previewUrl, (val) => {
+  console.log("即將渲染的預覽網址：", val);
+});
 // 處理模型上傳
 const handleModelUpload = (event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -77,6 +82,7 @@ const handleModelUpload = (event: Event) => {
     // 先檢查 productData.value 是否存在
     productData.value.model_file = input.files[0];
     productData.value.model_url = null;
+    console.log("設定了 model_file：", input.files[0]);
   }
 };
 
