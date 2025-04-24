@@ -4,11 +4,13 @@ import App from './App.vue'
 import pinia from './stores'
 import router from './router'
 
-
 //----------<<ElementPlus引入>>----------
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import zhtw from 'element-plus/es/locale/lang/zh-tw'
+
+//----------<<modelViewer引入>>----------
+import './plugin/modelViewer';
 
 //掛載根組件到app實例
 const app = createApp(App)

@@ -12,6 +12,9 @@ export interface ProductData {
   tagNames: string[]; //用來給渲染畫面
   category_id: number; //可能沒有
   description: string;
-  model: string | null;
+
+  model_url: string | null;  // 數據庫保存的模型URL
+  model_file: File | null;   // 僅前端使用，用於上傳
+
   images: ImageData[] | [];// 空陣列代表沒有圖片
 }

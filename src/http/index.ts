@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus';
 
 const instance = axios.create({
   baseURL: 'http://127.0.0.1:3007',  //後端url網址
-  timeout: 6000,                     //設置超時     
+  timeout: 10000,                     //設置超時     
   headers: {                         //請求頭設定  
     "Content-Type": 'application/x-www-form-urlencoded'
   }
