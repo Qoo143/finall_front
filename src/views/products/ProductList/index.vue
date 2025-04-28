@@ -4,8 +4,6 @@
       <div class="titleName">商品列表</div>
       <div class="Diversion">
         <RouterLink to="/products/manage">添加產品</RouterLink>
-        <RouterLink to="/products/category">產品分類</RouterLink>
-        <RouterLink to="/products/tag">產品標籤</RouterLink>
       </div>
     </div>
 
@@ -69,13 +67,13 @@
           <!-- 縮圖 -->
           <col style="width: 100px" />
           <!-- 價格 -->
-          <col style="width: 80px" />
+          <col style="width: 50px" />
           <!-- 庫存 -->
-          <col style="width: 80px" />
+          <col style="width: 50px" />
           <!-- 分類 -->
           <col style="width: 50px" />
           <!-- 狀態 -->
-          <col style="width: 80px" />
+          <col style="width: 50px" />
           <!-- 標籤 -->
           <col style="width: 160px" />
           <!-- 時間 -->

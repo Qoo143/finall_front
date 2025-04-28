@@ -48,6 +48,18 @@
       </el-input>
     </el-form-item>
 
+    <!-- 商品價格 -->
+    <el-form-item label="是否上架">
+      <el-select v-model="model.is_active" placeholder="Select">
+        <el-option
+          v-for="item in options"
+          :key="item.value"
+          :label="item.label"
+          :value="item.value"
+        />
+      </el-select>
+    </el-form-item>
+
     <!-- 分類（下拉選單） -->
     <el-form-item label="商品分類">
       <el-select v-model="model.category_id" placeholder="請選擇分類" clearable>
@@ -81,10 +93,22 @@ const model = defineModel<{
   name: string;
   price: number;
   stock: number;
+  is_active: number;
   tagIds: number[];
   tagNames: string[];
   category_id: number;
 }>({ required: true });
+//上架選擇
+const options = [
+  {
+    value: 1,
+    label: "上架中",
+  },
+  {
+    value: 0,
+    label: "未上架",
+  },
+];
 
 // 透過 props 傳入是否為創建模式
 const props = defineProps<{ createMode: boolean }>();
