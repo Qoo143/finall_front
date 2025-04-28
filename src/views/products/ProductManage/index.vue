@@ -72,7 +72,8 @@ const productData = ref<ProductData>({
   tagNames: [],
   category_id: 1,
   description: "",
-  model: null,
+  model_url: null, // 數據庫保存的模型URL
+  model_file: null, // 僅前端使用，用於上傳
   images: [],
 });
 const isSubmitting = ref(false); //防止重複提交開關
@@ -111,7 +112,8 @@ async function fetchProduct(id: string) {
     tagNames: data.tagNames || [],
     category_id: data.category_id || 1,
     description: data.description || "",
-    model: data.model || null, //null還是""待確認
+    model_url: data.model_url || null, // 保存後端返回的URL
+    model_file: null, // 初始化為null，等用戶上傳
     images: data.images.map((img: any) => ({
       id: img.id,
       file: img.file,
@@ -207,6 +209,19 @@ const handleSubmit = async () => {
     deletedImageIds.value.forEach((id) => {
       formData.append("deleted_image_ids[]", id.toString());
     });
+
+    /**
+     * 3.模型上傳確認
+     */
+    // 處理模型文件
+    if (productData.value.model_file) {
+      // 如果有新上傳的文件，添加到formData
+      formData.append("model", productData.value.model_file);
+    } else if (productData.value.model_url === null) {
+      // 如果model_url為null且沒有新文件，標記為刪除舊模型
+      formData.append("delete_model", "1");
+    }
+    // 如果model_url有值但沒有新文件，保持現有模型不變
     //------ 確認所有form鍵值對
     for (const pair of formData.entries()) {
       console.log(pair[0], pair[1]);

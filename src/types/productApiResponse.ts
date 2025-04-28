@@ -17,5 +17,5 @@ export interface ProductApiResponse {
   category_id: number;
   description: string;
   images: ImageData[];
-  model: string | null;
+  model_url: string | null;
 }
