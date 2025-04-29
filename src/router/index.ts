@@ -21,7 +21,7 @@ const router = createRouter({
           component: () => import("@/views/login/components/LoginForm.vue"), // 登入表單
         },
         {
-          path: "register",
+          path: "/register",
           name: "Register",
           component: () => import("@/views/login/components/RegisterForm.vue"), // 註冊表單
         },

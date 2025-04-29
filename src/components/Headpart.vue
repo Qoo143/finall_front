@@ -4,12 +4,16 @@
       <img src="../../../../public/img/QIANTA-d-b.svg" alt="logo" />
     </div>
     <div class="user">
-      <div class="userInfo">
-        <!-- <p>歡迎光臨</p> -->
+      <button v-if="isLogin" class="userInfoIsLogin">
+        {{ userName }}
+      </button>
+
+      <button @click="goLogin" v-else class="userInfoNoLogin">
         <el-icon class="user-icon" :size="24"><UserFilled /></el-icon>
-        <p>Qoo143</p>
-      </div>
-      <button class="switch" @click="goTo">
+        {{ "前往登入" }}
+      </button>
+
+      <button v-if="isAdmin" class="switch" @click="goTo">
         {{ isHome ? "前往後台" : "前往前台" }}
       </button>
     </div>
@@ -18,13 +22,33 @@
 
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useUserInfoStore } from "@/stores/user"; //pinia獲取資訊
+import { storeToRefs } from "pinia";
+/**
+ * 使用pinia
+ */
+const UserInfo = useUserInfoStore();
+const { userName, imageUrl } = storeToRefs(UserInfo); //保持解構出來還是響應式
+/**
+ * 判斷狀態
+ */
+const isLogin = ref(false); //先假設登入
+const isAdmin = ref(true); //先假設是管理員
+const isHome = computed(() => route.path.startsWith("/home")); // 判斷是否在前台
 
 const router = useRouter(); // 切換頁面用
 const route = useRoute(); // 判斷當前頁面用
 
-const isHome = computed(() => route.path.startsWith("/home")); // 判斷是否在前台
-
+/**
+ * 前往登入
+ */
+const goLogin = () => {
+  router.push("/login");
+};
+/**
+ * 切換前台/後台
+ */
 const goTo = () => {
   if (isHome.value) {
     router.push("/products");
@@ -53,20 +77,37 @@ const goTo = () => {
     align-items: center;
     gap: 12px;
 
-    .userInfo {
+    .userInfoIsLogin {
       display: flex;
       justify-content: center;
       align-items: center;
       font-size: 1.25rem;
       color: $primary-b-d;
       border: 1px dotted $primary-b-d;
+
       border-radius: 16px;
+      padding: 8px 12px;
+      cursor: pointer;
 
       &:hover {
-        background-color: #c4a3a3;
+        background-color: $primary-b-ll;
       }
-      p {
-        padding-right: 10px;
+    }
+
+    .userInfoNoLogin {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.25rem;
+      color: $primary-b-d;
+      border: 1px dotted $primary-b-d;
+
+      border-radius: 16px;
+      padding-right: 12px;
+      cursor: pointer;
+
+      &:hover {
+        background-color: $primary-b-ll;
       }
     }
 

@@ -6,4 +6,9 @@
   </div>
 </template>
 
-<style scoped></style>
+<style lang="scss" scoped>
+.page {
+  height: 100vh;
+  width: 100%;
+}
+</style>

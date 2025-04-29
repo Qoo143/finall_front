@@ -1,133 +1,128 @@
 <template>
   <!-- 小寶箱 -->
-  <div class="auth-box">
+  <div class="wrapper">
     <!-- 左邊的switch -->
-    <div class="side-panel left-panel">
-      <!-- 包裹箱 -->
-      <div class="panel-content">
-        <p class="welcome-text">welcome to Lumani</p>
-        <p class="sub-text">do not have account ?</p>
-        <el-button 
-          @click="$router.replace({ name: 'register' })" 
-          class="switch-button"
-          :plain="true"
-          color="#fb923c"
-          size="large"
-        >
-          Register
-        </el-button>
-        <img src="@/assets/images/LominaLogo_B.png" alt="Logo" class="logo" />
-        <p class="copyright">© 2025 Lumina, Inc. 版權所有</p>
+    <div class="leftPanel">
+      <div class="panelContent">
+        <div class="top"><p class="welcomeText">welcome to QianTa</p></div>
+        <div class="midle">
+          <p class="subText">do not have account ?</p>
+          <button @click="goRegister" class="switchButton">
+            <span>Register</span>
+          </button>
+        </div>
+        <div class="bottom">
+          <img
+            src="../../../../public/img/QIANTA2.svg"
+            alt="Logo"
+            class="logo"
+          />
+          <p class="copyRight">© 2025 QianTa, Inc. 版權所有</p>
+        </div>
       </div>
     </div>
-    
     <!-- 右邊的login -->
-    <div class="main-panel">
-      <!-- 包裹箱 -->
-      <div class="panel-content">
+    <div class="rightPanel">
+      <div class="panelContent">
         <p class="title">Login</p>
-        
-        <el-form 
-          :model="loginForm" 
-          :rules="loginRules"
-          ref="loginFormRef"
-          class="login-form"
-        >
-          <!-- 帳號輸入框 -->
-          <el-form-item prop="account">
-            <el-input 
-              v-model="loginForm.account" 
-              placeholder="請輸入帳號"
-              :prefix-icon="User"
-            />
-          </el-form-item>
-          
-          <!-- 密碼輸入框 -->
-          <el-form-item prop="password">
-            <el-input 
-              v-model="loginForm.password"
-              type="password" 
-              placeholder="請輸入密碼"
-              :prefix-icon="Lock"
-              show-password
-            />
-          </el-form-item>
-        </el-form>
+        <div class="middle">
+          <el-form
+            :model="loginForm"
+            :rules="loginRules"
+            ref="loginFormRef"
+            class="login-form"
+          >
+            <!-- 帳號輸入框 -->
+            <el-form-item prop="account">
+              <el-input
+                v-model="loginForm.account"
+                placeholder="請輸入帳號"
+                :prefix-icon="User"
+              />
+            </el-form-item>
 
-        <el-button 
-          text 
-          class="forget-button"
-        >
-          ForgetPassword?
-        </el-button>
-        
-        <ul class="social-login">
-          <li class="social-item">
-            <img src="@/assets/images/google.svg" alt="Google" />
-          </li>
-          <li class="social-item">
-            <img src="@/assets/images/facebook.svg" alt="Facebook" />
-          </li>
-          <li class="social-item">
-            <img src="@/assets/images/apple.svg" alt="Apple" />
-          </li>
-        </ul>
-        
-        <el-button 
-          @click="handleLogin" 
-          class="login-button"
-          color="#fdba74"
-          :loading="loading"
-        >
-          login
-        </el-button>
+            <!-- 密碼輸入框 -->
+            <el-form-item prop="password">
+              <el-input
+                v-model="loginForm.password"
+                type="password"
+                placeholder="請輸入密碼"
+                :prefix-icon="Lock"
+                show-password
+              />
+            </el-form-item>
+          </el-form>
+          <el-button text class="forget-button"> ForgetPassword? </el-button>
+        </div>
+
+        <div class="bottom">
+          <ul class="social-login">
+            <li class="social-item">
+              <img src="@/assets/images/google.svg" alt="Google" />
+            </li>
+            <li class="social-item">
+              <img src="@/assets/images/facebook.svg" alt="Facebook" />
+            </li>
+            <li class="social-item">
+              <img src="@/assets/images/apple.svg" alt="Apple" />
+            </li>
+          </ul>
+          <el-button
+            @click="handleLogin"
+            class="login-button"
+            color="#fdba74"
+            :loading="loading"
+          >
+            login
+          </el-button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { User, Lock } from '@element-plus/icons-vue';
-import type { FormInstance, FormRules } from 'element-plus';
+import { ref, reactive } from "vue";
+import { useRouter } from "vue-router";
+import { ElMessage } from "element-plus";
+import { User, Lock } from "@element-plus/icons-vue";
+import type { FormInstance, FormRules } from "element-plus";
 
 const router = useRouter();
-const loginFormRef = ref<FormInstance>();
+const loginFormRef: any = ref<FormInstance>();
 const loading = ref(false);
 
+const goRegister = () => {
+  router.push("/register");
+};
+
 const loginForm = reactive({
-  account: '',
-  password: '',
+  account: "",
+  password: "",
 });
 
 // 表單驗證規則
 const loginRules = reactive<FormRules>({
-  account: [
-    { required: true, message: '請輸入帳號', trigger: 'blur' },
-  ],
-  password: [
-    { required: true, message: '請輸入密碼', trigger: 'blur' },
-  ],
+  account: [{ required: true, message: "請輸入帳號", trigger: "blur" }],
+  password: [{ required: true, message: "請輸入密碼", trigger: "blur" }],
 });
 
 const handleLogin = async () => {
   if (!loginFormRef.value) return;
-  
-  await loginFormRef.value.validate((valid) => {
+
+  await loginFormRef.value.validate((valid: any) => {
     if (valid) {
       loading.value = true;
-      
+
       // 模擬登入處理
       setTimeout(() => {
-        console.log('登入請求：', loginForm);
-        ElMessage.success('登入成功！');
-        router.push({ name: 'index' });
+        console.log("登入請求：", loginForm);
+        ElMessage.success("登入成功！");
+        router.push({ name: "index" });
         loading.value = false;
       }, 1000);
     } else {
-      ElMessage.error('請填寫完整登入資訊');
+      ElMessage.error("請填寫完整登入資訊");
       return false;
     }
   });
@@ -135,83 +130,146 @@ const handleLogin = async () => {
 </script>
 
 <style lang="scss" scoped>
-.auth-box {
+.wrapper {
   width: 100%;
   height: 100%;
   border-radius: 24px;
   overflow: hidden;
   display: flex;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
 
-.side-panel {
-  height: 100%;
-  padding-top: 96px;
-  background-color: #f8f9fa;
-  
-  &.left-panel {
-    min-width: 350px;
-    
-    @media (min-width: 1536px) {
-      min-width: 400px;
+  /* 毛玻璃屬性設置 */
+  background-color: rgba(228, 241, 243, 0.41);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  .leftPanel {
+    width: 100%;
+    height: 100%;
+    padding: 96px;
+
+    .welcomeText {
+      font-size: 24px;
+    }
+    .bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .subText {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .copyRight {
+      font-size: 12px;
+      margin-top: 1rem;
+      color: #6b7280;
+    }
+    //變化按鈕
+    .switchButton {
+      font-size: 1.5rem;
+      padding: 0.8rem 1.2rem;
+      border-radius: 16px;
+      border: 2px solid #fb923c;
+      color: #fb923c;
+      background-color: transparent;
+      cursor: pointer;
+
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      transition: color 0.3s ease;
+      // 👉 關鍵：讓文字層保持在上層
+
+      span {
+        position: relative;
+        z-index: 1;
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background-color: #fb923c;
+        transition: transform 0.3s ease;
+        z-index: 0;
+      }
+
+      &:hover::before {
+        transform: translateX(100%);
+      }
+
+      // 文字 hover 後變白色
+      &:hover {
+        color: white;
+      }
     }
   }
-}
+  .rightPanel {
+    width: 100%;
+    min-width: 400px;
+    height: 100%;
+    padding: 86px 16px 96px 16px;
 
-.main-panel {
-  width: 100%;
-  height: 100%;
-  padding-top: 88px;
-  background-color: #e2e8f0;
-}
+    .title {
+      font-size: 36px;
+      font-family: monospace;
+    }
+    .middle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      .social-login {
+        width: 80%;
+        display: flex;
+        justify-content: space-between;
+        list-style: none;
+      }
 
-.panel-content {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+      .social-item {
+        width: 40px;
+        height: 40px;
+        padding: 4px;
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
 
-.welcome-text {
-  font-size: 20px;
-  padding-bottom: 64px;
-}
+        &:hover {
+          background-color: #9ca3af;
+        }
 
-.sub-text {
-  padding-bottom: 12px;
-}
+        &:active {
+          background-color: #bbbbbb;
+        }
 
-:deep(.switch-button) {
-  font-size: 24px;
-  padding: 12px 20px;
-  margin-bottom: 155px;
-  border-radius: 12px;
-  border-width: 2px;
-}
-
-.logo {
-  margin-bottom: 8px;
-}
-
-.copyright {
-  font-size: 12px;
-  margin-top: 8px;
-  color: #6b7280;
-}
-
-.title {
-  font-size: 36px;
-  padding-bottom: 64px;
-  font-family: monospace;
-}
-
-.login-form {
-  width: 60%;
-}
-
-:deep(.el-form-item) {
-  margin-bottom: 16px;
+        img {
+          width: 100%;
+          height: 100%;
+        }
+      }
+    }
+  }
+  .panelContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
 :deep(.el-input__wrapper) {
@@ -225,43 +283,6 @@ const handleLogin = async () => {
   height: 40px;
 }
 
-.forget-button {
-  margin-bottom: 80px;
-}
-
-.social-login {
-  display: flex;
-  gap: 24px;
-  align-items: center;
-  list-style: none;
-  padding: 0;
-}
-
-.social-item {
-  width: 40px;
-  height: 40px;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background-color 0.2s;
-  
-  &:hover {
-    background-color: #9ca3af;
-  }
-  
-  &:active {
-    background-color: #bbbbbb;
-  }
-  
-  img {
-    width: 100%;
-    height: 100%;
-  }
-}
-
 :deep(.login-button) {
   position: relative;
   width: 208px;
@@ -270,7 +291,7 @@ const handleLogin = async () => {
   border-radius: 12px;
   font-size: 16px;
   overflow: hidden;
-  
+
   &::before {
     content: "";
     position: absolute;
@@ -284,19 +305,43 @@ const handleLogin = async () => {
     border-radius: 12px;
     z-index: 0;
   }
-  
+
   &:hover::before {
     opacity: 1;
   }
-  
+
   &:active::before {
     background: linear-gradient(to right, #fecaca, #fef08a);
     opacity: 1;
   }
-  
+
   span {
     position: relative;
     z-index: 1;
+  }
+}
+:deep(.forget-button) {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -2px;
+    height: 1px;
+    background-color: currentColor;
+    transform: scaleX(0); // 初始寬度為 0
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover::after {
+    transform: scaleX(1); // 鼠標懸停時寬度擴展到 100%
+  }
+  &:hover {
+    background-color: transparent !important; // 移除 hover 背景色
+    // 或設置你想要的背景色
   }
 }
 </style>
