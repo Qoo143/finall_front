@@ -21,7 +21,7 @@ instance.interceptors.request.use(function (config) {
 // 響應攔截
 instance.interceptors.response.use(function (response) {
   //若返回訊息status=0 (成功)
-  if (response.data.status === 0) {
+  if (response.data.code === 0) {
     ElMessage({
       message: response.data.message, //由後端返回
       type: 'success',

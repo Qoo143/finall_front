@@ -73,7 +73,7 @@
             color="#fdba74"
             :loading="loading"
           >
-            login
+            {{ loading ? "登入中..." : "login" }}
           </el-button>
         </div>
       </div>
@@ -87,8 +87,10 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { User, Lock } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules } from "element-plus";
+import { useUserInfoStore } from '@/stores/user';
 
 const router = useRouter();
+const userStore = useUserInfoStore();
 const loginFormRef: any = ref<FormInstance>();
 const loading = ref(false);
 
@@ -110,17 +112,22 @@ const loginRules = reactive<FormRules>({
 const handleLogin = async () => {
   if (!loginFormRef.value) return;
 
-  await loginFormRef.value.validate((valid: any) => {
+  await loginFormRef.value.validate(async (valid: boolean) => {
     if (valid) {
-      loading.value = true;
-
-      // 模擬登入處理
-      setTimeout(() => {
-        console.log("登入請求：", loginForm);
+      try {
+        loading.value = true;
+        
+        // 使用 store 的登入方法
+        await userStore.userLogin(loginForm);
+        
         ElMessage.success("登入成功！");
         router.push({ name: "index" });
+      } catch (error: any) {
+        console.error("登入錯誤:", error);
+        ElMessage.error(error.message || "登入失敗，請檢查帳號密碼");
+      } finally {
         loading.value = false;
-      }, 1000);
+      }
     } else {
       ElMessage.error("請填寫完整登入資訊");
       return false;
@@ -145,7 +152,7 @@ const handleLogin = async () => {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
   .leftPanel {
-    width: 100%;
+    width: 40%;
     height: 100%;
     padding: 96px;
 
@@ -192,16 +199,16 @@ const handleLogin = async () => {
         content: "";
         position: absolute;
         top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
+        left: -125%;
+        width: 120%;
+        height: 120%;
         background-color: #fb923c;
         transition: transform 0.3s ease;
         z-index: 0;
       }
 
       &:hover::before {
-        transform: translateX(100%);
+        transform: translateX(90%);
       }
 
       // 文字 hover 後變白色
@@ -211,19 +218,25 @@ const handleLogin = async () => {
     }
   }
   .rightPanel {
-    width: 100%;
-    min-width: 400px;
+    width: 60%;
+    // min-width: 400px;
     height: 100%;
     padding: 86px 16px 96px 16px;
 
     .title {
-      font-size: 36px;
+      color: $primary-b-d;
+      font-size: 3rem;
       font-family: monospace;
     }
     .middle {
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
+      .login-form {
+        width: 80%; // 或任何你想要的固定寬度，例如 320px
+        max-width: 300px; // 設定最大寬度避免在大螢幕上過寬
+      }
     }
     .bottom {
       display: flex;
@@ -284,6 +297,8 @@ const handleLogin = async () => {
 }
 
 :deep(.login-button) {
+  border: none !important;
+  box-shadow: none !important;
   position: relative;
   width: 208px;
   height: 40px;
@@ -291,6 +306,9 @@ const handleLogin = async () => {
   border-radius: 12px;
   font-size: 16px;
   overflow: hidden;
+  // &:hover{
+  //   border: none;
+  // }
 
   &::before {
     content: "";
@@ -301,7 +319,7 @@ const handleLogin = async () => {
     bottom: 0;
     background: linear-gradient(to right, #f87171, #eab308);
     opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    transition: opacity 0.3s ease;
     border-radius: 12px;
     z-index: 0;
   }
@@ -322,14 +340,16 @@ const handleLogin = async () => {
 }
 :deep(.forget-button) {
   position: relative;
+  color: $primary-b-d;
 
   &::after {
     content: "";
     position: absolute;
     left: 0;
     right: 0;
-    bottom: -2px;
+    bottom: 2px;
     height: 1px;
+    color: $primary-b-d;
     background-color: currentColor;
     transform: scaleX(0); // 初始寬度為 0
     transform-origin: left;

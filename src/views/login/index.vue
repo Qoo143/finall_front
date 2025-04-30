@@ -1,13 +1,13 @@
 <template>
   <div class="wrapper">
-    <!-- 底圖 + 漸層背景包一起 -->
-    <div class="background">
-      <div class="dynamicBackground"></div>
-    </div>
-
     <!-- 登入註冊視窗 -->
     <div class="container">
       <RouterView />
+    </div>
+
+    <!-- 底圖 + 漸層背景包一起 -->
+    <div class="background">
+      <div class="dynamicBackground"></div>
     </div>
   </div>
 </template>
@@ -58,8 +58,11 @@ import { RouterView } from "vue-router";
   // 登入與註冊routerview
   .container {
     margin: auto;
-    width: 800px;
-    height: 70%;
+    width: 70%; // 設定為視窗寬度的 70%
+    max-width: 1000px; // 最大寬度 800px
+    min-width: 800px; // 最小寬度 400px
+    height: 70%; // 保持高度為固定比例
+
     border-radius: 24px;
     z-index: 2; // 最上層
     position: relative;

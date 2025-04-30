@@ -19,22 +19,15 @@ export const register = (data: any): any => {
     data: {               //請求參數  
       account,
       password,
-    }
+    },
   })
 }
 
 //登入接口
 export const login = (data: any): any => {
-  const {
-    account,
-    password
-  } = data
   return instance({
     url: '/api/login',
     method: 'POST',
-    data: {
-      account,
-      password
-    }
+    data
   })
 }
