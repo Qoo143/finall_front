@@ -6,7 +6,7 @@
       <div class="panelContent">
         <div class="top"><p class="welcomeText">welcome to QianTa</p></div>
         <div class="midle">
-          <p class="subText">do not have account ?</p>
+          <p class="subText">Don't have an account ?</p>
           <button @click="goRegister" class="switchButton">
             <span>Register</span>
           </button>
@@ -73,7 +73,7 @@
             color="#fdba74"
             :loading="loading"
           >
-            {{ loading ? "登入中..." : "login" }}
+            {{ loading ? "登入中..." : "Login" }}
           </el-button>
         </div>
       </div>
