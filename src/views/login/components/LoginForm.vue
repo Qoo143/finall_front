@@ -87,7 +87,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { User, Lock } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules } from "element-plus";
-import { useUserInfoStore } from '@/stores/user';
+import { useUserInfoStore } from "@/stores/user";
 
 const router = useRouter();
 const userStore = useUserInfoStore();
@@ -116,12 +116,13 @@ const handleLogin = async () => {
     if (valid) {
       try {
         loading.value = true;
-        
+
         // 使用 store 的登入方法
         await userStore.userLogin(loginForm);
-        
+
         ElMessage.success("登入成功！");
-        router.push({ name: "index" });
+
+        router.push({ name: "ProductList" });
       } catch (error: any) {
         console.error("登入錯誤:", error);
         ElMessage.error(error.message || "登入失敗，請檢查帳號密碼");

@@ -1,6 +1,8 @@
 import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { login } from '@/api/login';
+import { useRouter } from 'vue-router';
+const router = useRouter()
 
 export const useUserInfoStore = defineStore('userInfo', () => {
   const token = ref<string>(localStorage.getItem('token') || '');
@@ -26,6 +28,9 @@ export const useUserInfoStore = defineStore('userInfo', () => {
 
         localStorage.setItem('token', token.value);
         localStorage.setItem('account', account.value);
+
+        // 確保路由切換完成
+        window.location.href = '/products';
 
         return Promise.resolve(res);
       } else {
