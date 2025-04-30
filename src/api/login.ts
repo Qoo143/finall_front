@@ -8,15 +8,16 @@ import instance from '@/http/index';
 //--------------------<<前端路由區>>-------------------------
 
 //註冊接口
+// 增加註冊 API 函數
 export const register = (data: any): any => {
   const {
     account,
     password,
   } = data
   return instance({
-    url: '/api/register', //註冊請求接口網址
-    method: 'POST',       //請求方法
-    data: {               //請求參數  
+    url: '/api/regist', // 根據你的 router/login.js 路由
+    method: 'POST',
+    data: {
       account,
       password,
     }
@@ -25,16 +26,9 @@ export const register = (data: any): any => {
 
 //登入接口
 export const login = (data: any): any => {
-  const {
-    account,
-    password
-  } = data
   return instance({
     url: '/api/login',
     method: 'POST',
-    data: {
-      account,
-      password
-    }
+    data
   })
 }

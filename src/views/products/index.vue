@@ -1,6 +1,7 @@
 <template>
   <div class="layout">
     <Headpart class="header" />
+
     <div class="section">
       <SidebarNav class="sidebar" />
       <div class="main">
@@ -25,7 +26,7 @@ import Headpart from "@/components/Headpart.vue";
 
   .header {
     width: 100%;
-    height: 60px;
+    height: auto;
   }
   .section {
     width: 100%;

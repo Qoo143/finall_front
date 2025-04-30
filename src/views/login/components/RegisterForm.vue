@@ -1,106 +1,341 @@
 <template>
-  <el-card class="register-card" shadow="hover">
-    <h2 class="title">註冊帳號</h2>
-    <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-      <el-form-item label="帳號" prop="account">
-        <el-input v-model="form.account" placeholder="請輸入帳號" />
-      </el-form-item>
+  <!-- 小寶箱 -->
+  <div class="wrapper">
+    <!-- 左邊的login -->
+    <div class="leftPanel">
+      <div class="panelContent">
+        <p class="title">Register</p>
+        <div class="middle">
+          <el-form
+            :model="registerForm"
+            :rules="registerRules"
+            ref="registerFormRef"
+            class="register-form"
+          >
+            <!-- 帳號輸入框 -->
+            <el-form-item prop="account">
+              <el-input
+                v-model="registerForm.account"
+                placeholder="請輸入帳號"
+                :prefix-icon="User"
+              />
+            </el-form-item>
 
-      <el-form-item label="密碼" prop="password">
-        <el-input
-          v-model="form.password"
-          type="password"
-          placeholder="請輸入密碼"
-          show-password
-        />
-      </el-form-item>
+            <!-- 密碼輸入框 -->
+            <el-form-item prop="password">
+              <el-input
+                v-model="registerForm.password"
+                type="password"
+                placeholder="請輸入密碼"
+                :prefix-icon="Lock"
+                show-password
+              />
+            </el-form-item>
 
-      <el-form-item label="確認密碼" prop="rePassword">
-        <el-input
-          v-model="form.rePassword"
-          type="password"
-          placeholder="再次輸入密碼"
-          show-password
-        />
-      </el-form-item>
+            <!-- 確認密碼輸入框 -->
+            <el-form-item prop="rePassword">
+              <el-input
+                v-model="registerForm.rePassword"
+                type="password"
+                placeholder="請再次輸入密碼"
+                :prefix-icon="Lock"
+                show-password
+              />
+            </el-form-item>
+          </el-form>
+        </div>
 
-      <el-form-item>
-        <el-button type="primary" @click="submitForm">註冊</el-button>
-        <el-button @click="resetForm">重設</el-button>
-      </el-form-item>
-    </el-form>
-  </el-card>
+        <div class="bottom">
+          <el-button
+            @click="handleRegister"
+            class="register-button"
+            color="#fdba74"
+            :loading="loading"
+          >
+            {{ loading ? "註冊中..." : "Register" }}
+          </el-button>
+        </div>
+      </div>
+    </div>
+    <!-- 右邊的switch -->
+    <div class="rightPanel">
+      <div class="panelContent">
+        <div class="top"><p class="welcomeText">welcome to QianTa</p></div>
+        <div class="middle">
+          <p class="subText">already have account ?</p>
+          <button @click="goLogin" class="switchButton">
+            <span>Login</span>
+          </button>
+        </div>
+        <div class="bottom">
+          <img
+            src="../../../../public/img/QIANTA2.svg"
+            alt="Logo"
+            class="logo"
+          />
+          <p class="copyRight">© 2025 QianTa, Inc. 版權所有</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, reactive } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { register } from "@/api/login";
+import { User, Lock } from "@element-plus/icons-vue";
+import type { FormInstance, FormRules } from "element-plus";
+import { register } from "@/api/login"; // 導入 register API
 
-//幫此表單設計引用名稱
-const formRef = ref();
+const router = useRouter();
+const registerFormRef: any = ref<FormInstance>();
+const loading = ref(false);
 
-//:model="form" => 設定驗整哪個物件
-interface RegisterForm {
-  account: string;
-  password: string;
-  rePassword: string;
-}
-const form = ref<RegisterForm>({
+const goLogin = () => {
+  router.push("/login");
+};
+
+const registerForm = reactive({
   account: "",
   password: "",
   rePassword: "",
 });
 
-//自訂驗證函式（例如：密碼是否一致）
-//一定要呼叫 callback()，不然會卡住！
-const validatePasswordMatch = (_: any, value: string, callback: any) => {
-  if (value === "") {
-    callback(new Error("請再次輸入密碼"));
-  } else if (value !== form.value.password) {
-    callback(new Error("兩次輸入的密碼不一致"));
-  } else {
-    callback();
-  }
-};
-
-//驗證規則基本語法（rules）
-//rules 是一個物件，每個 key 對應到 form 的 prop 名稱，每個 key 對應一個陣列，陣列中是驗證規則。
-const rules = {
+// 表單驗證規則
+const registerRules = reactive<FormRules>({
   account: [{ required: true, message: "請輸入帳號", trigger: "blur" }],
   password: [{ required: true, message: "請輸入密碼", trigger: "blur" }],
   rePassword: [
     { required: true, message: "請再次輸入密碼", trigger: "blur" },
-    { validator: validatePasswordMatch, trigger: "blur" },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== registerForm.password) {
+          callback(new Error("兩次輸入的密碼不一致"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
   ],
-};
+});
 
-const submitForm = () => {
-  formRef.value.validate((valid: boolean) => {
+const handleRegister = async () => {
+  if (!registerFormRef.value) return;
+
+  await registerFormRef.value.validate(async (valid: boolean) => {
     if (valid) {
-      ElMessage.success("註冊提交！");
-      // TODO: 這裡可以串接 /register API
-      register(form.value);
+      try {
+        loading.value = true;
+        
+        // 呼叫註冊 API
+        const res = await register({
+          account: registerForm.account,
+          password: registerForm.password,
+        });
+        
+        // 根據後端回傳結果處理
+        if (res.code === 0) {
+          ElMessage.success(res.message || "註冊成功！");
+          // 註冊成功，導向登入頁
+          router.push("/login");
+        } else {
+          // 伺服器返回錯誤
+          ElMessage.error(res.message || "註冊失敗，請稍後再試");
+        }
+      } catch (error: any) {
+        console.error("註冊錯誤:", error);
+        // 顯示詳細錯誤
+        if (error.response?.data?.message) {
+          ElMessage.error(error.response.data.message);
+        } else {
+          ElMessage.error("網路錯誤，請稍後再試");
+        }
+      } finally {
+        loading.value = false;
+      }
     } else {
-      ElMessage.error("請確認註冊資訊是否正確");
+      ElMessage.error("請填寫完整註冊資訊");
+      return false;
     }
   });
 };
-
-const resetForm = () => {
-  formRef.value.resetFields();
-};
 </script>
 
-<style scoped lang="scss">
-.register-card {
-  max-width: 450px;
-  margin: 80px auto;
-  padding: 30px;
+<style lang="scss" scoped>
+.wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+
+  /* 毛玻璃屬性設置 */
+  background-color: rgba(228, 241, 243, 0.41);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  .rightPanel {
+    width: 40%;
+    height: 100%;
+    padding: 96px;
+
+    .welcomeText {
+      font-size: 24px;
+    }
+    .bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .middle {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      
+      .subText {
+        font-size: 1rem;
+        margin-bottom: 1rem;
+      }
+    }
+
+    .copyRight {
+      font-size: 12px;
+      margin-top: 1rem;
+      color: #6b7280;
+    }
+    //變化按鈕
+    .switchButton {
+      font-size: 1.5rem;
+      padding: 0.8rem 1.2rem;
+      border-radius: 16px;
+      border: 2px solid #fb923c;
+      color: #fb923c;
+      background-color: transparent;
+      cursor: pointer;
+      margin: 0 auto;
+
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      transition: color 0.3s ease;
+      // 👉 關鍵：讓文字層保持在上層
+
+      span {
+        position: relative;
+        z-index: 1;
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -125%;
+        width: 120%;
+        height: 120%;
+        background-color: #fb923c;
+        transition: transform 0.3s ease;
+        z-index: 0;
+      }
+
+      &:hover::before {
+        transform: translateX(90%);
+      }
+
+      // 文字 hover 後變白色
+      &:hover {
+        color: white;
+      }
+    }
+  }
+  .leftPanel {
+    width: 60%;
+    // min-width: 400px;
+    height: 100%;
+    padding: 86px 16px 96px 16px;
+
+    .title {
+      color: $primary-b-d;
+      font-size: 3rem;
+      font-family: monospace;
+    }
+    .middle {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      .register-form {
+        width: 80%; 
+        max-width: 300px; 
+      }
+    }
+    .bottom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+  }
+  .panelContent {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 
-.title {
-  text-align: center;
-  margin-bottom: 20px;
+:deep(.el-input__wrapper) {
+  background-color: #f1f5f9;
+  box-shadow: none;
+  border-radius: 12px;
+  padding: 0 12px;
+}
+
+:deep(.el-input__inner) {
+  height: 40px;
+}
+
+:deep(.register-button) {
+  border: none !important;
+  box-shadow: none !important;
+  position: relative;
+  width: 208px;
+  height: 40px;
+  margin-top: 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to right, #f87171, #eab308);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 12px;
+    z-index: 0;
+  }
+
+  &:hover::before {
+    opacity: 1;
+  }
+
+  &:active::before {
+    background: linear-gradient(to right, #fecaca, #fef08a);
+    opacity: 1;
+  }
+
+  span {
+    position: relative;
+    z-index: 1;
+  }
 }
 </style>
