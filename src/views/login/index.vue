@@ -1,9 +1,15 @@
 <template>
   <div class="wrapper">
     <!-- 登入註冊視窗 -->
-    <div class="container">
-      <RouterView />
-    </div>
+
+    <!-- --------------------<<包裝動畫>>-------------------- -->
+    <router-view v-slot="{ Component, route }">
+      <transition name="route" mode="out-in" appear>
+        <div class="container" :key="route.name">
+          <component :is="Component" />
+        </div>
+      </transition>
+    </router-view>
 
     <!-- 底圖 + 漸層背景包一起 -->
     <div class="background">
@@ -66,7 +72,13 @@ import { RouterView } from "vue-router";
     border-radius: 24px;
     z-index: 2; // 最上層
     position: relative;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+
+    /* 毛玻璃屬性設置 */
+    background-color: rgba(228, 241, 243, 0.41);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   }
 }
 //漸變設定
@@ -80,5 +92,21 @@ import { RouterView } from "vue-router";
   100% {
     background-position: 0% 0%;
   }
+}
+
+//vue-animation
+.route-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+.route-enter-active {
+  transition: all 0.5s ease;
+}
+.route-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.route-leave-active {
+  transition: all 0.5s ease;
 }
 </style>

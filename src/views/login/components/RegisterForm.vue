@@ -128,13 +128,13 @@ const handleRegister = async () => {
     if (valid) {
       try {
         loading.value = true;
-        
+
         // 呼叫註冊 API
         const res = await register({
           account: registerForm.account,
           password: registerForm.password,
         });
-        
+
         // 根據後端回傳結果處理
         if (res.code === 0) {
           ElMessage.success(res.message || "註冊成功！");
@@ -171,12 +171,6 @@ const handleRegister = async () => {
   overflow: hidden;
   display: flex;
 
-  /* 毛玻璃屬性設置 */
-  background-color: rgba(228, 241, 243, 0.41);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
   .rightPanel {
     width: 40%;
@@ -195,7 +189,7 @@ const handleRegister = async () => {
       display: flex;
       flex-direction: column;
       align-items: center;
-      
+
       .subText {
         font-size: 1rem;
         margin-bottom: 1rem;
@@ -268,8 +262,8 @@ const handleRegister = async () => {
       flex-direction: column;
       align-items: center;
       .register-form {
-        width: 80%; 
-        max-width: 300px; 
+        width: 80%;
+        max-width: 300px;
       }
     }
     .bottom {

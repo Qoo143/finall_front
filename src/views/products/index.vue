@@ -6,7 +6,14 @@
       <SidebarNav class="sidebar" />
       <div class="main">
         <Breadcrumb class="breadcrumb" />
-        <router-view class="content" />
+        <!-- --------------------<<包裝動畫>>-------------------- -->
+        <router-view v-slot="{ Component, route }">
+          <transition name="route" mode="out-in" appear>
+            <div class="content" :key="route.name">
+              <component :is="Component" />
+            </div>
+          </transition>
+        </router-view>
       </div>
     </div>
   </div>
@@ -16,6 +23,7 @@
 import SidebarNav from "@/views/products/components/SidebarNav.vue";
 import Breadcrumb from "@/views/products/components/Breadcrumb.vue";
 import Headpart from "@/components/Headpart.vue";
+// import gsap from "gsap";
 </script>
 
 <style scoped lang="scss">
@@ -55,5 +63,20 @@ import Headpart from "@/components/Headpart.vue";
       }
     }
   }
+}
+//vue-animation
+.route-enter-from {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+.route-enter-active {
+  transition: all 0.5s ease;
+}
+.route-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.route-leave-active {
+  transition: all 0.5s ease;
 }
 </style>

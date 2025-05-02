@@ -95,7 +95,7 @@
             <th>操作</th>
           </tr>
         </thead>
-        <tbody>
+        <transition-group tag="tbody" name="productList" mode="out-in">
           <tr
             v-for="(product, index) in products"
             :key="product.id"
@@ -164,11 +164,11 @@
               <span @click="openDelete(product.id, product.name)">刪除</span>
             </td>
           </tr>
-        </tbody>
+        </transition-group>
       </table>
     </div>
 
-    <div class="pageNation">
+    <div class="pageNation" v-if="products">
       <!-- hide-on-single-page -->
       <el-pagination
         v-model:current-page="currentPage"
@@ -179,6 +179,7 @@
         background
       />
     </div>
+
     <DeleteConfirmModal
       v-if="deleteDialogVisible"
       v-model:visible="deleteDialogVisible"
@@ -186,6 +187,7 @@
       v-model:productName="selectedProductName"
       :on-deleted="fetchProducts"
     />
+
     <ProductDetailModal
       v-if="detailDialogVisible"
       v-model:visible="detailDialogVisible"
@@ -596,4 +598,23 @@ onMounted(() => {
   background-color: $primary-b-l !important;
   margin-left: 5px;
 }
+//vue動畫
+// .productList-enter-from {
+//   transform: translateY(30px);
+// }
+// .productList-enter-active {
+//   transition: all 0.3s ease;
+// }
+
+.productList-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
+.productList-leave-active {
+  transition: all 0.3s ease;
+}
+
+// .productList-move {
+//   transition: all 0.5s ease;
+// }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="head">
     <div class="logo">
-      <img src="../../../../public/img/QIANTA-d-b.svg" alt="logo" />
+      <img src="../../../../img/QIANTA-d-b.svg" alt="logo" />
     </div>
     <div class="user">
       <button v-if="isLogin" class="userInfoIsLogin">

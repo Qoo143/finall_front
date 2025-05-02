@@ -145,12 +145,6 @@ const handleLogin = async () => {
   overflow: hidden;
   display: flex;
 
-  /* 毛玻璃屬性設置 */
-  background-color: rgba(228, 241, 243, 0.41);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
-  border-radius: 24px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 
   .leftPanel {
     width: 40%;
