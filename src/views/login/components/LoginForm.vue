@@ -38,6 +38,7 @@
                 v-model="loginForm.account"
                 placeholder="請輸入帳號"
                 :prefix-icon="User"
+                @keypress.enter="handleLogin"
               />
             </el-form-item>
 
@@ -49,6 +50,7 @@
                 placeholder="請輸入密碼"
                 :prefix-icon="Lock"
                 show-password
+                @keypress.enter="handleLogin"
               />
             </el-form-item>
           </el-form>
@@ -73,7 +75,7 @@
             color="#fdba74"
             :loading="loading"
           >
-            {{ loading ? "登入中..." : "Login" }}
+            {{ loading ? "Login..." : "Login" }}
           </el-button>
         </div>
       </div>
@@ -122,7 +124,7 @@ const handleLogin = async () => {
 
         ElMessage.success("登入成功！");
 
-        router.push({ name: "ProductList" });
+        router.push({ name: "products" });
       } catch (error: any) {
         console.error("登入錯誤:", error);
         ElMessage.error(error.message || "登入失敗，請檢查帳號密碼");
@@ -144,7 +146,6 @@ const handleLogin = async () => {
   border-radius: 24px;
   overflow: hidden;
   display: flex;
-
 
   .leftPanel {
     width: 40%;
