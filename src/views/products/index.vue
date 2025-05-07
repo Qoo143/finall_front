@@ -7,13 +7,15 @@
       <div class="main">
         <Breadcrumb class="breadcrumb" />
         <!-- --------------------<<包裝動畫>>-------------------- -->
-        <router-view v-slot="{ Component, route }">
+        <!-- <router-view v-slot="{ Component, route }">
           <transition name="route" mode="out-in" appear>
             <div class="content" :key="route.name">
               <component :is="Component" />
             </div>
           </transition>
-        </router-view>
+        </router-view> -->
+        <!-- --------------------<<無動畫>>-------------------- -->
+        <router-view class="content" />
       </div>
     </div>
   </div>
