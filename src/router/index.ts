@@ -5,12 +5,12 @@ import { createRouter, createWebHashHistory } from "vue-router";
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    // 預設轉向
+    //預設轉向
     {
       path: "/",
       redirect: "/products",
     },
-    //登入註冊
+    //1.登入註冊
     {
       path: "/login",
       component: () => import("@/views/login/index.vue"), // 包含 tab 切換邏輯
@@ -27,7 +27,7 @@ const router = createRouter({
         },
       ],
     },
-    //後台商品管理區
+    //2.後台商品管理區
     {
       path: "/products",
       name: "products",
@@ -73,17 +73,44 @@ const router = createRouter({
         },
       ],
     },
-    //前台用戶區
+    //3.前台用戶區
     {
       path: "/home",
       name: "home",
       component: () => import("@/views/home/index.vue"),
       children: [
+        //3.1主頁面(一頁式)
         {
           path: "",
           name: "HomePage",
-          component: () => import("@/views/home/components/homePage.vue"),
+          component: () => import("@/views/home/HomePage/index.vue"),
         },
+        //3.2商品頁面
+        {
+          path: "/ProductsPage",
+          name: "ProductsPage",
+          component: () => import("@/views/home/ProductsPage/index.vue"),
+          children: [
+            //3.2.1選擇商品
+            // {
+            //   path: "",
+            //   name: "HomePage",
+            //   component: () => import("@/views/home/HomePage/index.vue"),
+            // },
+            //3.2.2確認商品
+            // {
+            //   path: "",
+            //   name: "ProductsPage",
+            //   component: () => import("@/views/home/HomePage/index.vue"),
+            // }
+          ],
+        },
+        //3.3訂單頁面
+        {
+          path: "",
+          name: "OrderListPage",
+          component: () => import("@/views/home/OrderListPage/index.vue"),
+        }
       ],
     },
   ],

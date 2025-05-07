@@ -1,3 +1,4 @@
+@use "variables" as *; // 引入變數檔案
 //商品列表灰階
 .gray {
   background-color: $bg-3;
@@ -19,4 +20,7 @@
   position: relative;
   left: -16px;
 }
-
+//debug
+.debug {
+  border: 1px solid red;
+}

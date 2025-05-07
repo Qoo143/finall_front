@@ -30,7 +30,10 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         // 注意：這邊的路徑是相對於本專案的 root，而不是 src！
-        additionalData: `@use "@/assets/css/variables" as *;`
+        additionalData: `
+        @use "@/assets/css/variables" as *;
+        @use "@/assets/css/common" as *;
+        `
       }
     }
   }
