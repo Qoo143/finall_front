@@ -1,9 +1,7 @@
 <template>
   <div class="wrapper">
     <!-- 1.大圖 -->
-    <div class="demoCar">
-      <img src="/img/HomePage/niceC.jpg" alt="" />
-    </div>
+    <CarAnimate />
     <!-- 2.歡迎 -->
     <div class="welcome">
       <div class="welcomeContent">
@@ -21,24 +19,17 @@
   </div>
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+// import { ref, onMounted } from "vue";
+// import gsap from "gsap";
+import CarAnimate from "@/views/home/HomePage/components/CarAnimate.vue";
+</script>
 
 <style scoped lang="scss">
 .wrapper {
   width: 100%;
   height: 100%;
-  .demoCar {
-    width: 100%;
-    height: 80vh;
-    max-width: 100%;
-    img {
-      width: 100%;
-      height: 100%;
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
-      display: block;
-    }
-  }
+
   .welcome {
     width: 100%;
     height: 40vw;
