@@ -1,12 +1,12 @@
 <template>
-  <div ref="wrapper debug" class="wrapper">
+  <div ref="wrapper" class="wrapper">
     <div ref="content" class="content">
       <!-- <img src="/img/HomePage/Scale/Scale-1.png" alt="" /> -->
       <img
         v-for="index in 7"
         :key="index"
         :src="`/img/HomePage/Scale/Scale-${index}.png`"
-        :class="('debug', { active: index === activeIndex })"
+        :class="{ active: index === activeIndex }"
       />
     </div>
     <div ref="blackSection" class="blackSection">
@@ -35,31 +35,36 @@ const blackSection = ref(); //黑色文字區
 const firstP = ref();
 const secondP = ref();
 const thirdP = ref();
+
 onMounted(() => {
-  // 創建主時間軸 - 處理放大效果
+  // 創建主時間軸 - 處理放大效果和所有動畫
   const mainTl = gsap.timeline({
     scrollTrigger: {
       trigger: wrapper.value,
       start: "top top",
       end: "+=2000",
       pin: true,
-      pinSpacing: true, // 確保創建空間
-      scrub: 1, // 平滑滾動效果，值越大越平滑
+      pinSpacing: true,
+      scrub: 1,
       // markers: true,
+      immediateRender: false, // 確保動畫只有在滾動開始後才執行
     },
   });
 
-  // 第一階段：放大內容到填滿螢幕 (同時切換圖片1-3)
+  // 第一階段：放大內容到填滿螢幕 (切換圖片1-3)
   mainTl.to(content.value, {
-    width: "100vw",
-    height: "100vh",
+    width: "100%",
+    height: "100%",
     borderRadius: "0px",
-    duration: 0.5, // 時間軸上的相對位置
-    ease: "none",
+    duration: 1, // 相對時間軸上的持續時間，佔比更大
+    ease: "power1.inOut",
+    onStart: () => {
+      activeIndex.value = 1; // 確保開始時是第一張
+    },
     onUpdate: function () {
-      // 根據動畫進度更新圖片
+      // 在放大過程中只切換前3張
       const progress = this.progress(); // 0-1之間
-      if (progress < 0.25) {
+      if (progress < 0.33) {
         activeIndex.value = 1;
       } else if (progress < 0.66) {
         activeIndex.value = 2;
@@ -73,11 +78,15 @@ onMounted(() => {
   mainTl.to(
     {},
     {
-      duration: 0.5, // 時間軸上的相對位置
+      duration: 1, // 相對時間軸上分配更多時間給圖片切換
       ease: "none",
-
+      onStart: () => {
+        // 確保這階段從第4張開始
+        activeIndex.value = 4;
+      },
       onUpdate: function () {
-        const progress = this.progress(); // 0-1之間
+        // 這裡的進度是針對這一個動畫段落的
+        const progress = this.progress();
         if (progress < 0.25) {
           activeIndex.value = 4;
         } else if (progress < 0.5) {
@@ -91,57 +100,61 @@ onMounted(() => {
     }
   );
 
-  //第三階段 : 黑圖滑上來
-  mainTl.to(
-    blackSection.value,
-    {
-      top: "0%", // 從 top: 100% 滑到 top: 0%
-      duration: 0.5,
-      ease: "power1.inOut",
-    },
-    ">+0.2" // 在前一段動畫後稍作延遲再執行
-  );
-
-  // 創建主時間軸 - 文字浮動
-  const textTl = gsap.timeline({
-    scrollTrigger: {
-      trigger: blackSection.value,
-      start: "bottom 30%",
-      markers: true,
-    },
-  });
-  textTl.from([firstP.value], {
-    xPercent: -100,
-    duration: 0.5,
-    opacity: 0,
+  // 第三階段：黑色部分滑上來
+  mainTl.to(blackSection.value, {
+    top: 0,
+    duration: 0.5, // 相對較短的持續時間
     ease: "power1.inOut",
+    onStart: () => {
+      // 當黑色區塊滑到位置後，創建文字動畫
+      createTextAnimation();
+    },
   });
-  textTl.from(
-    [secondP.value],
-    {
-      xPercent: 100,
-      duration: 0.5,
-      opacity: 0,
-      ease: "power1.inOut",
-    },
-    "<+=0.2"
-  );
-  textTl.from(
-    [thirdP.value],
-    {
-      opacity: 0,
-      yPercent: 100,
-      duration: 0.7,
-      ease: "power1.in",
-    },
-    "<+=0.5"
-  );
+
+  // 單獨創建文字動畫，確保它只在黑色區塊進入視口後觸發
+  const createTextAnimation = () => {
+    // 黑色區塊滑入完成後，立即開始文字動畫
+    // 注意：這裡不再使用時間軸而是單獨的動畫
+    const textTl = gsap.timeline();
+
+    textTl
+      .from(
+        firstP.value,
+        {
+          autoAlpha: 0,
+          x: 50, // 假設初始有偏移
+          duration: 0.5,
+          ease: "power2.out",
+        },
+        "0.5"
+      )
+      .from(
+        secondP.value,
+        {
+          autoAlpha: 0,
+          x: -50,
+          duration: 0.5,
+          ease: "power2.out",
+        },
+        "-=0.3"
+      )
+      .from(
+        thirdP.value,
+        {
+          autoAlpha: 0,
+          y: 100,
+          duration: 0.5,
+          ease: "power2.out",
+        },
+        "-=0.2"
+      );
+  };
 });
 </script>
 
 <style scoped lang="scss">
 .wrapper {
-  max-width: 100%;
+  max-width: 100vw;
   width: 100%;
   height: 100vh;
   background-color: $bg-3;
@@ -153,14 +166,11 @@ onMounted(() => {
     top: 50%;
     transform: translate(-50%, -50%);
     transform-origin: 50% 50%;
-
     width: 60%;
     height: 500px;
     min-width: 800px;
-
     border-radius: 500px;
     overflow: hidden;
-
     display: flex;
     align-items: center;
     justify-content: center;
@@ -182,6 +192,7 @@ onMounted(() => {
       z-index: 1;
     }
   }
+
   .blackSection {
     width: 100%;
     height: 100vh;
@@ -191,7 +202,12 @@ onMounted(() => {
     z-index: 3;
     background-color: rgb(18, 21, 36);
     color: $text-ll;
-    padding: 6rem 3rem 6rem 0;
+    display: grid; // 使用Grid布局
+    grid-template-columns: 1fr; // 單列布局
+    grid-template-rows: auto auto 1fr; // 根據內容自動分配高度
+    gap: 2rem; // 設置間距
+    padding: 6rem; // 統一的padding
+    box-sizing: border-box;
     overflow: hidden;
     font-family: "Helvetica Neue", sans-serif;
     .firstP {
@@ -201,14 +217,16 @@ onMounted(() => {
       font-size: 5rem;
     }
     .thirdP {
-      opacity: 1;
-      position: absolute;
-      font-size: 1.5rem;
-      width: 800px;
-      right: 0;
-      bottom: 6rem;
+      grid-column: 1; // 指定列
+      grid-row: 3; // 指定行
+      align-self: end; // 底部對齊
+      justify-self: end; // 右側對齊
+      max-width: 800px;
+      width: 100%;
       background-color: #313053;
-      padding: 3rem 5rem;
+      padding: 3rem;
+      box-sizing: border-box;
+      margin-bottom: 6rem; // 使用margin代替絕對定位
     }
   }
 }

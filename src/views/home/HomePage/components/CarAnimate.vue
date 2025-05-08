@@ -144,8 +144,7 @@ onMounted(() => {
           opacity: 0,
           y: -50,
           ease: "none",
-        },
-        0
+        }
       );
 
       // ScrollTrigger 控制離場動畫
