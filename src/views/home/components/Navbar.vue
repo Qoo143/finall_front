@@ -1,19 +1,25 @@
 <template>
   <header class="navbar">
-    <nav class="navbar__left">
-      <button @click="onClickMenu">選單</button>
-      <button>首頁</button>
-      <button>商品</button>
-      <button>訂單</button>
-      <button>關於</button>
-    </nav>
+    <!-- 固定寬度的導航容器 -->
+    <div class="navbar__container">
+      <!-- 左側選單 -->
+      <nav class="navbar__left">
+        <button @click="onClickMenu">選單</button>
+        <button>首頁</button>
+        <button>商品</button>
+        <button>訂單</button>
+        <button>關於</button>
+      </nav>
 
-    <div class="navbar__center">
-      <img src="/img/QIANTA2.svg" alt="Logo" class="navbar__logo" />
-    </div>
+      <!-- 中間 Logo -->
+      <div class="navbar__center">
+        <img src="/img/QIANTA2.svg" alt="Logo" class="navbar__logo" />
+      </div>
 
-    <div class="navbar__right">
-      <button>購物車</button>
+      <!-- 右側購物車 -->
+      <div class="navbar__right">
+        <button>購物車</button>
+      </div>
     </div>
   </header>
 </template>
@@ -32,37 +38,39 @@ function onClickMenu() {
   z-index: 1000;
   width: 100%;
   height: 60px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 1rem;
   background-color: transparent;
   color: white;
+  
+  // 內容容器
+  &__container {
+    position: relative;
+    max-width: 1440px; // 設置一個最大寬度
+    height: 100%;
+    margin: 0 auto; // 居中
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; // 三列布局：左側、中間、右側
+    align-items: center;
+  }
 
-  &__left,
-  &__center,
-  &__right {
+  &__left {
     display: flex;
     align-items: center;
-    pointer-events: auto;
+    gap: 0.75rem;
+    justify-self: start; // 靠左
   }
 
   &__center {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 0;
-
     display: flex;
     align-items: center;
     justify-content: center;
-    pointer-events: none; // logo 不阻擋操作（可選）
   }
 
-  &__left,
   &__right {
+    display: flex;
+    align-items: center;
     gap: 0.75rem;
+    justify-self: end; // 靠右
   }
 
   &__logo {
