@@ -1,9 +1,16 @@
 <template>
   <div ref="wrapper" class="wrapper">
     <div class="contentCard debug">
-      <div v-for="index in 7" :key="index">
+      <div v-for="index in 6" :key="index">
         <img :src="`/img/HomePage/productCard/card0${index}.png`" />
       </div>
+    </div>
+
+    <div class="linkButton">
+      <span>
+        <span>+</span>
+        前往瀏覽
+      </span>
     </div>
   </div>
 </template>
@@ -18,15 +25,15 @@ gsap.registerPlugin(ScrollTrigger);
 
 <style scoped lang="scss">
 .wrapper {
-  width: 100%;
+  // 此處不限制寬
   height: 100vh;
+
   .contentCard {
-    .img {
-      img {
-        max-width: 100%; // ✅ 限制圖片不超過容器寬
-        height: auto;
-        display: block; // 避免意外空白
-      }
+    display: flex;
+    img {
+      object-fit: cover;
+      width: 500px; // ✅ 限制圖片不超過容器寬
+      display: block; // 避免意外空白
     }
   }
 }
