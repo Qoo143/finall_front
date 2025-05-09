@@ -79,7 +79,7 @@ const router = createRouter({
       name: "home",
       component: () => import("@/views/home/index.vue"),
       children: [
-        //3.1主頁面(一頁式)
+        //3.1主頁面(一頁式.)
         {
           path: "",
           name: "HomePage",
