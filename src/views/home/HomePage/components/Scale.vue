@@ -37,12 +37,14 @@ const secondP = ref();
 const thirdP = ref();
 
 onMounted(() => {
-  // 創建主時間軸 - 處理放大效果和所有動畫
+  /**
+   * 放大、換圖片動畫
+   */
   const mainTl = gsap.timeline({
     scrollTrigger: {
       trigger: wrapper.value,
       start: "top top",
-      end: "+=2000",
+      end: "+=200%",
       pin: true,
       pinSpacing: true,
       scrub: 1,
@@ -111,10 +113,11 @@ onMounted(() => {
     },
   });
 
-  // 單獨創建文字動畫，確保它只在黑色區塊進入視口後觸發
+  /**
+   *  文字動畫
+   */
   const createTextAnimation = () => {
     // 黑色區塊滑入完成後，立即開始文字動畫
-    // 注意：這裡不再使用時間軸而是單獨的動畫
     const textTl = gsap.timeline();
 
     textTl
@@ -195,7 +198,7 @@ onMounted(() => {
 
   .blackSection {
     width: 100%;
-    height: 100vh;
+    height: 100%;
     position: absolute;
     top: 100%;
     left: 0;

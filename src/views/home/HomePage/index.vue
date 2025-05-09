@@ -8,6 +8,7 @@
     <Scale />
     <!-- 4.商品卡片橫向滾動 -->
     <ProductCard />
+    <div style="width: 100%; height: 1500px"></div>
   </div>
 </template>
 
