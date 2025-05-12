@@ -1,7 +1,12 @@
 <template>
   <header class="navbar">
     <!-- 固定寬度的導航容器 -->
-    <div class="navbar__container">
+    <div
+      :class="{
+        navbar__container: true,
+        white: isProductsPage,
+      }"
+    >
       <!-- 左側選單 -->
       <nav class="navbar__left">
         <button @click="onClickMenu">選單</button>
@@ -25,9 +30,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
 const router = useRouter();
+const route = useRoute();
 /**
  * 跳轉
  */
@@ -37,6 +43,12 @@ const goto = (name: string) => {
 function onClickMenu() {
   alert("選單被點了！");
 }
+
+//判斷所在頁面變換class
+// 判斷是否在商品頁面
+const isProductsPage = computed(() => {
+  return route.path.includes("/ProductsPage");
+});
 </script>
 
 <style scoped lang="scss">
@@ -97,6 +109,15 @@ function onClickMenu() {
 
     &:hover {
       background-color: #414141;
+    }
+  }
+}
+//判斷路徑轉換顏色
+.white {
+  button {
+    color: black;
+    &:hover {
+      background-color: $primary-b-ll;
     }
   }
 }
