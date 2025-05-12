@@ -104,7 +104,7 @@ const isProductsPage = computed(() => {
     color: white;
     font-size: 1rem;
     padding: 8px 16px;
-    border-radius: 32px;
+    border-radius: 0.5rem;
     cursor: pointer;
 
     &:hover {
@@ -116,6 +116,9 @@ const isProductsPage = computed(() => {
 .white {
   button {
     color: black;
+    border-radius: 0.5rem;
+    background-color: #e7e7e7;
+
     &:hover {
       background-color: $primary-b-ll;
     }

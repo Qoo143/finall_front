@@ -1,15 +1,14 @@
-<!-- src/views/home/ProductsPage/components/ProductCard.vue -->
 <template>
   <div class="product-card">
     <div class="product-image">
       <img
-        :src="imageUrl || '/img/placeholder.png'"
+        :src="imageUrl"
         :alt="product.name"
         @error="handleImageError"
       />
       <!-- 標籤重疊在圖片上 -->
       <div class="product-tags">
-        <span v-for="tag in product.tags.slice(0, 3)" :key="tag.id" class="tag">
+        <span v-for="tag in displayTags" :key="tag.id" class="tag">
           {{ tag.name }}
         </span>
       </div>
@@ -19,7 +18,7 @@
       <div class="product-price">${{ product.price }}</div>
     </div>
     <div class="product-actions">
-      <button class="cart-btn" @click="$emit('addToCart', product)">
+      <button class="cart-btn" @click="$emit('add-to-cart', product)">
         <i class="el-icon-shopping-cart"></i>
         加入購物車
       </button>
@@ -31,29 +30,50 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
+// 定義接口
+interface Tag {
+  id: number;
+  name: string;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  main_image_url: string;
+  tags: Tag[];
+}
+
 const props = defineProps<{
-  product: any;
+  product: Product;
 }>();
+
+defineEmits(['view', 'add-to-cart']);
 
 const imageError = ref(false);
 
+// 圖片 URL 處理
 const imageUrl = computed(() => {
   if (imageError.value) return '/img/placeholder.png';
-  if (!props.product.main_image_url) return null;
+  if (!props.product.main_image_url) return '/img/placeholder.png';
   return `http://127.0.0.1:3007${props.product.main_image_url}`;
 });
 
+// 最多顯示 3 個標籤
+const displayTags = computed(() => {
+  return (props.product.tags || []).slice(0, 3);
+});
+
+// 圖片載入錯誤處理
 const handleImageError = () => {
   imageError.value = true;
 };
-
-defineEmits(['view', 'addToCart']);
 </script>
 
 <style scoped lang="scss">
 .product-card {
   background-color: white;
-  border-radius: 16px;
+  border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -135,6 +155,7 @@ defineEmits(['view', 'addToCart']);
     padding: 0 16px 16px;
     display: flex;
     gap: 8px;
+    margin-top: auto; // 推到底部
     
     .view-btn, .cart-btn {
       flex: 1;

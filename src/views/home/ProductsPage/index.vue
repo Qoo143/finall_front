@@ -1,4 +1,3 @@
-<!-- src/views/home/ProductsPage/index.vue -->
 <template>
   <div class="wrapper">
     <div class="products-container">
@@ -16,9 +15,9 @@
 
         <div class="sidebar-section">
           <h2>商品分類</h2>
-          <el-select 
-            v-model="catValue" 
-            placeholder="選擇分類" 
+          <el-select
+            v-model="catValue"
+            placeholder="選擇分類"
             class="sidebar-select"
           >
             <el-option
@@ -43,35 +42,39 @@
           />
         </div>
 
+        <!-- 上架時間 - 垂直布局 -->
         <div class="sidebar-section">
           <h2>上架時間</h2>
-          <el-date-picker
-            v-model="dateValue"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="開始日期"
-            end-placeholder="結束日期"
-            format="YYYY/MM/DD"
-            value-format="YYYY-MM-DD"
-            unlink-panels
-            :clearable="true"
-            class="sidebar-date-picker"
-          />
+          <div class="date-inputs-vertical">
+            <el-date-picker
+              v-model="startDate"
+              type="date"
+              placeholder="開始日期"
+              format="YYYY/MM/DD"
+              value-format="YYYY-MM-DD"
+              class="sidebar-date-picker"
+            />
+            <el-date-picker
+              v-model="endDate"
+              type="date"
+              placeholder="結束日期"
+              format="YYYY/MM/DD"
+              value-format="YYYY-MM-DD"
+              class="sidebar-date-picker"
+            />
+          </div>
         </div>
 
         <div class="sidebar-actions">
-          <el-button 
-            @click="handleSearch" 
-            type="primary" 
+          <el-button
+            @click="handleSearch"
+            type="primary"
             class="search-btn"
             :icon="Search"
           >
             搜尋
           </el-button>
-          <el-button 
-            @click="handleReset" 
-            class="reset-btn"
-          >
+          <el-button @click="handleReset" class="reset-btn">
             重設條件
           </el-button>
         </div>
@@ -82,8 +85,13 @@
         <div class="page-header">
           <h1>商品瀏覽</h1>
           <div class="sort-container">
-            <span>排序方式: </span>
-            <el-select v-model="sortValue" placeholder="排序" size="small">
+            <span class="sort-label">排序方式: </span>
+            <el-select 
+              v-model="sortValue" 
+              placeholder="排序" 
+              size="small"
+              class="sort-select"
+            >
               <el-option label="最新上架" value="newest" />
               <el-option label="價格由低到高" value="price_asc" />
               <el-option label="價格由高到低" value="price_desc" />
@@ -127,83 +135,20 @@
     </div>
 
     <!-- 商品詳情彈窗 -->
-    <el-dialog
-      v-model="detailDialogVisible"
-      title="商品詳情"
-      width="80%"
-      top="5vh"
-      destroy-on-close
-    >
-      <div v-if="selectedProduct" class="product-detail">
-        <div class="detail-image">
-          <img
-            :src="
-              selectedProduct.main_image_url
-                ? `http://127.0.0.1:3007${selectedProduct.main_image_url}`
-                : '/img/placeholder.png'
-            "
-            :alt="selectedProduct.name"
-          />
-        </div>
-        <div class="detail-info">
-          <h2>{{ selectedProduct.name }}</h2>
-          <div class="price">${{ selectedProduct.price }}</div>
-          <div class="stock">庫存: {{ selectedProduct.stock }}</div>
-          <div class="tags">
-            <span
-              v-for="tag in selectedProduct.tags"
-              :key="tag.id"
-              class="tag"
-            >
-              {{ tag.name }}
-            </span>
-          </div>
-          <div class="description">
-            <h3>商品描述</h3>
-            <p>{{ selectedProduct.description || "暫無描述" }}</p>
-          </div>
-          <div class="actions">
-            <el-button type="primary" size="large" @click="handleAddToCart(selectedProduct)">加入購物車</el-button>
-            <el-button size="large">收藏商品</el-button>
-          </div>
-        </div>
-      </div>
-    </el-dialog>
+    <ProductDetailModal
+      v-if="detailDialogVisible"
+      v-model:visible="detailDialogVisible"
+      :product="selectedProduct"
+      @add-to-cart="handleAddToCart"
+    />
 
     <!-- 數量選擇彈窗 -->
-    <el-dialog
-      v-model="quantityDialogVisible"
-      title="選擇數量"
-      width="320px"
-      center
-      :show-close="true"
-      custom-class="quantity-dialog"
-    >
-      <div class="quantity-selector" v-if="selectedCartProduct">
-        <img
-          :src="getProductImageUrl(selectedCartProduct)"
-          :alt="selectedCartProduct.name"
-          class="product-thumbnail"
-        />
-        <div class="product-info-mini">
-          <div class="product-name">{{ selectedCartProduct.name }}</div>
-          <div class="product-price">${{ selectedCartProduct.price }}</div>
-        </div>
-        <div class="quantity-control">
-          <span class="label">數量:</span>
-          <el-input-number 
-            v-model="quantity" 
-            :min="1" 
-            :max="selectedCartProduct.stock || 99"
-            size="small"
-          />
-        </div>
-        <div class="quantity-actions">
-          <el-button @click="quantityDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="addToCart">確認</el-button>
-        </div>
-      </div>
-    </el-dialog>
+    <QuantitySelector
+      v-if="quantityDialogVisible"
+      v-model:visible="quantityDialogVisible"
+      :product="selectedCartProduct"
+      @confirm="addToCart"
+    />
   </div>
 </template>
 
@@ -213,6 +158,8 @@ import axios from "axios";
 import { Search } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import ProductCard from "./components/ProductCard.vue";
+import ProductDetailModal from "./components/ProductDetailModal.vue";
+import QuantitySelector from "./components/QuantitySelector.vue";
 
 // 定義接口
 interface Tag {
@@ -232,8 +179,13 @@ interface Product {
   tags: Tag[];
 }
 
+// 日期選擇 - 分開為兩個日期
+const startDate = ref("");
+const endDate = ref("");
+// 計算得出原本的 dateValue 格式
+const dateValue = computed(() => [startDate.value, endDate.value]);
+
 // 條件綁定
-const dateValue = ref<[string, string]>(["", ""]);
 const catValue = ref(""); // 分類 ID
 const tagValue = ref<string[]>([]); // 標籤（多個）
 const nameValue = ref(""); // 名稱
@@ -269,8 +221,8 @@ const fetchProducts = async () => {
       is_frontend: "true", // 標識為前台請求
     };
 
-    // 處理日期範圍
-    if (dateValue.value && dateValue.value[0] && dateValue.value[1]) {
+    // 處理日期範圍 - 使用計算得出的 dateValue
+    if (dateValue.value[0] && dateValue.value[1]) {
       params["start_date"] = dateValue.value[0];
       params["end_date"] = dateValue.value[1];
     }
@@ -292,7 +244,6 @@ const fetchProducts = async () => {
 
     // 處理排序
     if (sortValue.value) {
-      // 伺服器端需要支援此參數
       params["sort"] = sortValue.value;
     }
 
@@ -368,7 +319,8 @@ const handleSearch = () => {
 
 // 重設函數
 const handleReset = () => {
-  dateValue.value = ["", ""];
+  startDate.value = "";
+  endDate.value = "";
   catValue.value = "";
   tagValue.value = [];
   nameValue.value = "";
@@ -386,28 +338,21 @@ const openProductDetail = (product: Product) => {
 // 處理加入購物車
 const handleAddToCart = (product: Product) => {
   selectedCartProduct.value = product;
-  quantity.value = 1;
   quantityDialogVisible.value = true;
-  
+
   // 如果商品詳情彈窗正在顯示，則關閉它
   if (detailDialogVisible.value) {
     detailDialogVisible.value = false;
   }
 };
 
-// 獲取商品圖片 URL
-const getProductImageUrl = (product: Product) => {
-  if (!product.main_image_url) return '/img/placeholder.png';
-  return `http://127.0.0.1:3007${product.main_image_url}`;
-};
-
 // 添加到購物車
-const addToCart = () => {
+const addToCart = (quantity: number) => {
   if (!selectedCartProduct.value) return;
-  
+
   // 將來在這裡添加 API 調用
   ElMessage.success(
-    `已將 ${quantity.value} 件 ${selectedCartProduct.value.name} 加入購物車`
+    `已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`
   );
   quantityDialogVisible.value = false;
 };
@@ -430,7 +375,7 @@ onMounted(() => {
   display: flex;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 80px 20px 40px;
+  padding: 8vh 0px 40px;
   gap: 30px;
 }
 
@@ -445,17 +390,18 @@ onMounted(() => {
   align-self: flex-start;
   position: sticky;
   top: 80px;
-  
+  height: 80vh;
+
   .sidebar-section {
     margin-bottom: 24px;
-    
+
     h2 {
       font-size: 16px;
       font-weight: 600;
       color: $primary-b-d;
       margin-bottom: 12px;
     }
-    
+
     .search-input,
     .sidebar-select,
     .sidebar-input-tag,
@@ -463,33 +409,47 @@ onMounted(() => {
       width: 100%;
     }
   }
-  
+
+  /* 添加新的垂直布局樣式 */
+  .date-inputs-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .sidebar-date-picker {
+      width: 100%;
+    }
+  }
+
   .sidebar-actions {
     display: flex;
     flex-direction: column;
     gap: 10px;
     margin-top: 32px;
-    
+
     .search-btn,
     .reset-btn {
       width: 100%;
       height: 40px;
+      margin: 0; /* 清除所有邊距 */
     }
-    
+
     .search-btn {
       background-color: $primary-b-d;
       border: none;
-      
+      margin-bottom: 10px;
+
       &:hover {
         background-color: $primary-b;
       }
     }
-    
+
     .reset-btn {
       background-color: $bg-3;
       color: $text-d;
       border: none;
-      
+      margin-left: 0 !important; /* 確保覆蓋 Element Plus 的樣式 */
+
       &:hover {
         background-color: $primary-b-ll;
       }
@@ -507,31 +467,43 @@ onMounted(() => {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
-    
+    flex-wrap: nowrap; /* 防止在小螢幕上換行 */
+
     h1 {
       font-size: 28px;
       font-weight: 700;
       color: $primary-b-d;
+      margin-right: 20px; /* 確保標題與排序區域有間距 */
+      white-space: nowrap; /* 防止標題折疊 */
     }
-    
+
     .sort-container {
       display: flex;
       align-items: center;
+      justify-content: end;
       gap: 10px;
-      
-      span {
+      min-width: 280px; /* 給予足夠寬度 */
+      white-space: nowrap; /* 防止文字折疊 */
+
+      .sort-label {
         color: $text-d;
         font-size: 14px;
+        flex-shrink: 0; /* 防止文字壓縮 */
+      }
+
+      .sort-select {
+        min-width: 140px; /* 給選擇器足夠寬度 */
+        width: auto;
       }
     }
   }
-  
+
   .products-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-rows: repeat(2, auto); // 明確指定兩行
     gap: 24px;
-    margin-bottom: 40px;
+    margin-bottom: 2rem;
 
     @media (max-width: 1200px) {
       grid-template-columns: repeat(3, 1fr);
@@ -544,7 +516,7 @@ onMounted(() => {
     @media (max-width: 576px) {
       grid-template-columns: 1fr;
     }
-    
+
     .no-products {
       grid-column: 1 / -1;
       padding: 40px 0;
@@ -557,180 +529,8 @@ onMounted(() => {
 
   .pagination-container {
     display: flex;
-    justify-content: center;
+    justify-content: end;
     margin-top: 32px;
-  }
-}
-
-/* 商品詳情彈窗樣式 */
-:deep(.el-dialog) {
-  border-radius: 16px;
-  overflow: hidden;
-
-  .el-dialog__header {
-    background-color: $primary-b-d;
-    color: white;
-    padding: 16px 20px;
-
-    .el-dialog__title {
-      color: white;
-      font-weight: 600;
-    }
-  }
-}
-
-.product-detail {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-
-  .detail-image {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  }
-
-  .detail-info {
-    h2 {
-      font-size: 28px;
-      font-weight: 700;
-      color: $primary-b-d;
-      margin-bottom: 16px;
-    }
-
-    .price {
-      font-size: 32px;
-      font-weight: 700;
-      color: $primary-y;
-      margin-bottom: 16px;
-    }
-
-    .stock {
-      font-size: 18px;
-      color: $text-d;
-      margin-bottom: 16px;
-    }
-
-    .tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 24px;
-
-      .tag {
-        background-color: $primary-b-ll;
-        color: $primary-b-d;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 14px;
-      }
-    }
-
-    .description {
-      background-color: $bg-1;
-      padding: 16px;
-      border-radius: 12px;
-      margin-bottom: 24px;
-
-      h3 {
-        font-size: 18px;
-        font-weight: 600;
-        color: $primary-b-d;
-        margin-bottom: 12px;
-      }
-
-      p {
-        font-size: 16px;
-        line-height: 1.6;
-        color: $text-d;
-      }
-    }
-    
-    .actions {
-      display: flex;
-      gap: 16px;
-      
-      .el-button {
-        flex: 1;
-      }
-    }
-  }
-}
-
-/* 數量選擇彈窗樣式 */
-:deep(.quantity-dialog) {
-  .el-dialog__header {
-    padding: 16px;
-    margin-right: 0;
-    text-align: center;
-    border-bottom: 1px solid #f0f0f0;
-  }
-  
-  .el-dialog__body {
-    padding: 20px;
-  }
-}
-
-.quantity-selector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  
-  .product-thumbnail {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 16px;
-  }
-  
-  .product-info-mini {
-    margin-bottom: 20px;
-    text-align: center;
-    
-    .product-name {
-      font-weight: 600;
-      font-size: 16px;
-      margin-bottom: 8px;
-    }
-    
-    .product-price {
-      color: $primary-y;
-      font-weight: 700;
-      font-size: 18px;
-    }
-  }
-  
-  .quantity-control {
-    display: flex;
-    align-items: center;
-    margin-bottom: 24px;
-    
-    .label {
-      margin-right: 16px;
-      font-size: 16px;
-    }
-  }
-  
-  .quantity-actions {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    gap: 12px;
-    
-    .el-button {
-      flex: 1;
-    }
   }
 }
 
@@ -757,5 +557,44 @@ onMounted(() => {
 
 :deep(.el-button) {
   border-radius: 8px;
+}
+
+/* 修復排序選擇器寬度和文字顯示問題 */
+:deep(.sort-select) {
+  .el-input {
+    width: 100%; 
+    min-width: 140px;
+  }
+  
+  .el-input__wrapper {
+    width: 100%;
+  }
+}
+
+/* 確保下拉選單有足夠寬度 */
+:deep(.el-select-dropdown) {
+  min-width: 160px !important;
+}
+
+:deep(.el-select-dropdown__item) {
+  white-space: nowrap;
+  min-width: 140px;
+}
+
+/* 媒體查詢，在更小的屏幕上調整排序區域 */
+@media (max-width: 768px) {
+  .products-main .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    
+    h1 {
+      margin-bottom: 16px;
+    }
+    
+    .sort-container {
+      width: 100%;
+      justify-content: flex-start;
+    }
+  }
 }
 </style>

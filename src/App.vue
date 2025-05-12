@@ -8,7 +8,7 @@
 
 <style lang="scss" scoped>
 .page {
-  height: 100%;
+  height: 100vh;
   width: 100%;
 }
 </style>
