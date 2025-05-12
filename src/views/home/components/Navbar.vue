@@ -5,8 +5,8 @@
       <!-- 左側選單 -->
       <nav class="navbar__left">
         <button @click="onClickMenu">選單</button>
-        <button>首頁</button>
-        <button>商品</button>
+        <button @click="goto('home')">首頁</button>
+        <button @click="goto('ProductsPage')">商品</button>
         <button>訂單</button>
         <button>關於</button>
       </nav>
@@ -25,6 +25,15 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+const router = useRouter();
+/**
+ * 跳轉
+ */
+const goto = (name: string) => {
+  router.push(`/${name}`);
+};
 function onClickMenu() {
   alert("選單被點了！");
 }
@@ -40,7 +49,7 @@ function onClickMenu() {
   height: 60px;
   background-color: transparent;
   color: white;
-  
+
   // 內容容器
   &__container {
     position: relative;
