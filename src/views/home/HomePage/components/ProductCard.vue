@@ -134,6 +134,8 @@ onMounted(() => {
     observer.observe(card);
   });
 });
+
+
 </script>
 
 <style scoped lang="scss">

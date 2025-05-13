@@ -45,6 +45,12 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { useCartStore } from '@/stores/cart';
+import { useUserInfoStore } from '@/stores/user';
+import { ElMessage } from 'element-plus';
+
+const cartStore = useCartStore();
+const userStore = useUserInfoStore();
 
 // 定義接口
 interface Tag {
@@ -86,10 +92,32 @@ const getProductImageUrl = computed(() => {
   return `http://127.0.0.1:3007${props.product.main_image_url}`;
 });
 
+
 // 處理加入購物車
 const addToCart = () => {
-  if (props.product) {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('請先登入後再加入購物車');
+    return;
+  }
+  
+  if (!props.product) return;
+  
+  try {
+    cartStore.addToCart({
+      id: props.product.id,
+      name: props.product.name,
+      price: props.product.price,
+      image_url: props.product.main_image_url
+    }, 1); // 默認添加1個，這裡可以更改為使用數量選擇
+
+    ElMessage.success(`已將 ${props.product.name} 加入購物車`);
     emit('add-to-cart', props.product);
+  } catch (error) {
+    if (error instanceof Error) {
+      ElMessage.error(error.message);
+    } else {
+      ElMessage.error('加入購物車失敗');
+    }
   }
 };
 </script>

@@ -1,3 +1,4 @@
+// src/components/QuantitySelector.vue
 <template>
   <el-dialog
     v-model="visibleValue"
@@ -9,7 +10,7 @@
   >
     <div class="quantity-selector" v-if="product">
       <img
-        :src="getProductImageUrl"
+        :src="getProductImageUrl(product.main_image_url)"
         :alt="product.name"
         class="product-thumbnail"
       />
@@ -35,14 +36,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed } from 'vue';
 
-// 定義接口
+// 商品介面
 interface Product {
   id: number;
   name: string;
   price: number;
-  stock: number;
+  stock?: number;
   main_image_url: string;
 }
 
@@ -53,10 +54,10 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'update:visible', visible: boolean): void;
-  (e: 'confirm', quantity: number): void;
+  (e: 'confirm', quantity: number, product: Product): void;
 }>();
 
-// 使用計算屬性將 props.visible 代理為 visibleValue
+// 綁定visible
 const visibleValue = computed({
   get: () => props.visible,
   set: (value) => emit('update:visible', value)
@@ -66,32 +67,24 @@ const visibleValue = computed({
 const quantityValue = ref(1);
 
 // 獲取商品圖片 URL
-const getProductImageUrl = computed(() => {
-  if (!props.product?.main_image_url) return "/img/placeholder.png";
-  return `http://127.0.0.1:3007${props.product.main_image_url}`;
-});
+const getProductImageUrl = (url: string) => {
+  if (!url) return '/img/placeholder.png';
+  if (url.startsWith('http')) return url;
+  return `http://127.0.0.1:3007${url}`;
+};
 
 // 確認數量
 const confirmQuantity = () => {
-  emit('confirm', quantityValue.value);
+  if (props.product) {
+    emit('confirm', quantityValue.value, props.product);
+    visibleValue.value = false;
+    // 重置數量
+    quantityValue.value = 1;
+  }
 };
 </script>
 
 <style scoped lang="scss">
-/* 數量選擇彈窗樣式 */
-:deep(.quantity-dialog) {
-  .el-dialog__header {
-    padding: 16px;
-    margin-right: 0;
-    text-align: center;
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  .el-dialog__body {
-    padding: 20px;
-  }
-}
-
 .quantity-selector {
   display: flex;
   flex-direction: column;
@@ -142,6 +135,19 @@ const confirmQuantity = () => {
     .el-button {
       flex: 1;
     }
+  }
+}
+
+:deep(.quantity-dialog) {
+  .el-dialog__header {
+    padding: 16px;
+    margin-right: 0;
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .el-dialog__body {
+    padding: 20px;
   }
 }
 </style>

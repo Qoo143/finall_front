@@ -1,5 +1,5 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-
+import { useUserInfoStore } from '@/stores/user';
 //--------------------<<路由區>>-------------------------
 
 const router = createRouter({
@@ -110,10 +110,31 @@ const router = createRouter({
           path: "",
           name: "OrderListPage",
           component: () => import("@/views/home/OrderListPage/index.vue"),
+        },
+        //3.4結帳頁面
+        {
+          path: "/checkout",
+          name: "checkout",
+          component: () => import("@/views/home/CheckoutPage/index.vue"),
+          meta: { requiresAuth: true } // 需要登入才能訪問
         }
       ],
     },
   ],
+});
+
+// 添加全局前置守衛
+router.beforeEach((to, from, next) => {
+  const userStore = useUserInfoStore();
+  
+  // 檢查路由是否需要身份驗證
+  if (to.meta.requiresAuth && !userStore.isLoggedIn) {
+    // 未登入，跳轉到登入頁面
+    next({ path: '/login', query: { redirect: to.fullPath } });
+  } else {
+    // 已登入或不需要身份驗證，繼續訪問
+    next();
+  }
 });
 
 export default router;

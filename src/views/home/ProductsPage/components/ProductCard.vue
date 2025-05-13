@@ -29,6 +29,39 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import { useCartStore } from '@/stores/cart';
+import { useUserInfoStore } from '@/stores/user';
+import { ElMessage } from 'element-plus';
+
+const cartStore = useCartStore();
+const userStore = useUserInfoStore();
+
+/**
+ * 處理加入購物車function
+ */
+const handleAddToCart = () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('請先登入後再加入購物車');
+    return;
+  }
+  
+  try {
+    cartStore.addToCart({
+      id: props.product.id,
+      name: props.product.name,
+      price: props.product.price,
+      image_url: props.product.main_image_url
+    }, 1); // 默認添加1個
+
+    ElMessage.success(`已將 ${props.product.name} 加入購物車`);
+  } catch (error) {
+    if (error instanceof Error) {
+      ElMessage.error(error.message);
+    } else {
+      ElMessage.error('加入購物車失敗');
+    }
+  }
+};
 
 // 定義接口
 interface Tag {

@@ -23,17 +23,40 @@
 
       <!-- 右側購物車 -->
       <div class="navbar__right">
-        <button>購物車</button>
+        <button @click="openCart" class="cart-button">
+          購物車
+          <span v-if="cartStore.totalItems > 0" class="cart-badge">
+            {{ cartStore.totalItems }}
+          </span>
+        </button>
+        <button v-if="userStore.isLoggedIn" class="user-button">
+          {{ userStore.userName }}
+        </button>
+        <button v-else @click="goto('login')" class="login-button">登入</button>
       </div>
     </div>
+
+    <!-- 引入購物車側邊欄 -->
+    <CartSidebar v-model:visible="cartVisible" @checkout="goCheckout" />
   </header>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
+import CartSidebar from "@/views/home/components/CartSidebar.vue"; //購物車
+import { useCartStore } from "@/stores/cart";
+import { useUserInfoStore } from "@/stores/user";
+
+//使用pinia
 const router = useRouter();
 const route = useRoute();
+const cartStore = useCartStore();
+const userStore = useUserInfoStore();
+
+// 控制購物車側邊欄顯示狀態
+const cartVisible = ref(false);
+
 /**
  * 跳轉
  */
@@ -49,6 +72,27 @@ function onClickMenu() {
 const isProductsPage = computed(() => {
   return route.path.includes("/ProductsPage");
 });
+
+/**
+ * 打開購物車側邊欄
+ */
+const openCart = () => {
+  cartVisible.value = true;
+};
+
+/**
+ * 前往結帳頁面
+ */
+const goCheckout = () => {
+  // 確認用戶已登入
+  if (!userStore.isLoggedIn) {
+    router.push("/login");
+    return;
+  }
+
+  // 前往結帳頁面
+  router.push("/checkout");
+};
 </script>
 
 <style scoped lang="scss">
@@ -123,5 +167,17 @@ const isProductsPage = computed(() => {
       background-color: $primary-b-ll;
     }
   }
+  .navbar__right {
+    button {
+      background-color: transparent;
+      &:hover {
+        background-color: $primary-b-ll;
+      }
+    }
+  }
+}
+//克制icon
+.custom-icon {
+  font-size: 2rem;
 }
 </style>
