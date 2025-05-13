@@ -2,7 +2,8 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useUserInfoStore } from './user';
-import { getCart, addToCart, updateCartItem, removeFromCart, clearCart } from '@/api/cart';
+import axios from 'axios';
+import { ElMessage } from 'element-plus';
 
 // 定義購物車項目的介面
 export interface CartItem {
@@ -19,7 +20,7 @@ export const useCartStore = defineStore('cart', () => {
 
   // 購物車商品列表
   const items = ref<CartItem[]>([]);
-  const loading = ref(false); // 加載狀態
+  const loading = ref(false);//可供前端使用來顯示 loading spinner 或按鈕鎖定
 
   // 計算購物車中的商品總數
   const totalItems = computed(() => {
@@ -35,21 +36,24 @@ export const useCartStore = defineStore('cart', () => {
    * 獲取購物車內容
    */
   async function fetchCart() {
-    // 檢查用戶是否已登入
+
+    //若已登入（由 userStore.isLoggedIn 判斷），會呼叫後端 /api/cart 取得購物車
+    //失敗則改從 localStorage 撈資料備援"loadCartFromLocalStorage()"
     if (!userStore.isLoggedIn) return;
 
     loading.value = true;
     try {
-      // 使用新的 API 模組方法
-      const res = await getCart(userStore.token);
-
-      // 處理響應數據
+      const res = await axios.get('/api/cart', {
+        headers: { Authorization: `Bearer ${userStore.token}` }//登入驗證
+      });
+      
       if (res.data.code === 0) {
         items.value = res.data.data.items || [];
       }
     } catch (error) {
       console.error('獲取購物車失敗:', error);
-      // 如果獲取失敗，嘗試從本地存儲加載
+
+      // 如果獲取失敗，嘗試從本地存儲加載 **非常重要**
       loadCartFromLocalStorage();
     } finally {
       loading.value = false;
@@ -59,7 +63,7 @@ export const useCartStore = defineStore('cart', () => {
   /**
    * 加入購物車
    */
-  async function addToCartItem(
+  async function addToCart(
     item: {
       id: number,
       name: string,
@@ -74,8 +78,13 @@ export const useCartStore = defineStore('cart', () => {
 
     loading.value = true;
     try {
-      // 使用新的 API 模組方法
-      const res = await addToCart(userStore.token, item.id, quantity);
+      //推入商品id與數量
+      const res = await axios.post('/api/cart/items', {
+        productId: item.id,
+        quantity
+      }, {
+        headers: { Authorization: `Bearer ${userStore.token}` }//登入驗證
+      });
 
       if (res.data.code === 0) {
         // 成功添加後刷新購物車
@@ -115,18 +124,24 @@ export const useCartStore = defineStore('cart', () => {
   async function updateQuantity(itemId: number, quantity: number) {
     if (!userStore.isLoggedIn) return;
 
-    // 數量小於0就刪除
+    //數量小於0就刪除
     if (quantity <= 0) {
-      return removeCartItem(itemId);
+      return removeFromCart(itemId);
     }
 
     loading.value = true;
     try {
-      // 使用新的 API 模組方法
-      const res = await updateCartItem(userStore.token, itemId, quantity);
+      const res = await axios.patch(`/api/cart/items/${itemId}`, {
+        quantity
+      }, {
+        headers: { Authorization: `Bearer ${userStore.token}` }
+      });
 
       if (res.data.code === 0) {
         // 更新本地狀態
+        // 根據 itemId 找出商品在 items 陣列中的 index。
+        // 找到就直接更新那個項目的 quantity。
+        // 不用重新拉 API，避免多餘的請求，提升效率。
         const index = items.value.findIndex(item => item.id === itemId);
         if (index !== -1) {
           items.value[index].quantity = quantity;
@@ -149,13 +164,14 @@ export const useCartStore = defineStore('cart', () => {
   /**
    * 從購物車移除商品
    */
-  async function removeCartItem(itemId: number) {
+  async function removeFromCart(itemId: number) {
     if (!userStore.isLoggedIn) return;
 
     loading.value = true;
     try {
-      // 使用新的 API 模組方法
-      const res = await removeFromCart(userStore.token, itemId);
+      const res = await axios.delete(`/api/cart/items/${itemId}`, {
+        headers: { Authorization: `Bearer ${userStore.token}` }
+      });
 
       if (res.data.code === 0) {
         // 更新本地狀態
@@ -175,13 +191,14 @@ export const useCartStore = defineStore('cart', () => {
   /**
    * 清空購物車
    */
-  async function clearCartItems() {
+  async function clearCart() {
     if (!userStore.isLoggedIn) return;
 
     loading.value = true;
     try {
-      // 使用新的 API 模組方法
-      const res = await clearCart(userStore.token);
+      const res = await axios.delete('/api/cart', {
+        headers: { Authorization: `Bearer ${userStore.token}` }
+      });
 
       if (res.data.code === 0) {
         // 清空本地狀態
@@ -220,17 +237,17 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   return {
-    items,
-    totalItems,
-    totalAmount,
-    loading,
-    fetchCart,
-    addToCart: addToCartItem, // 重命名了方法，但保持外部接口一致
-    updateQuantity,
-    removeFromCart: removeCartItem, // 重命名了方法，但保持外部接口一致
-    clearCart: clearCartItems, // 重命名了方法，但保持外部接口一致
-    loadCartFromLocalStorage
+    items,//商品列表（包含每個商品的 id、數量、名稱、價格等）
+    totalItems,//所有商品的總數量（quantity 加總）
+    totalAmount,//購物車的總金額（price * quantity 加總）
+    loading,//是否處於載入狀態（例如正在 call API，前端可根據它顯示 loading spinner）
+    fetchCart,//從後端獲取購物車資料，若失敗則從 localStorage 撈資料備援
+    addToCart,//加入商品到購物車，若後端失敗則前端臨時加上並寫入 localStorage
+    updateQuantity,//更新購物車中某個商品的數量，若數量 <= 0 則自動轉為刪除
+    removeFromCart,//移除某個商品（依 item.id 刪除），後端失敗時仍會在前端更新並寫入 localStorage
+    clearCart,//清空整個購物車內容（後端或前端都會執行）
+    loadCartFromLocalStorage//當無法從後端獲取資料時，從 localStorage 還原購物車狀態
   };
 }, {
-  persist: true //數據持久化
+  persist: true //數據持久
 });

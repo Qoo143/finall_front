@@ -177,6 +177,7 @@ const handleImageError = () => {
       text-overflow: ellipsis;
       display: -webkit-box;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       -webkit-box-orient: vertical;
       line-height: 1.3;
       height: 2.6em; // 固定高度為兩行

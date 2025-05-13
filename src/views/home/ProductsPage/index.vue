@@ -80,15 +80,15 @@
         </div>
       </div>
 
-      <!-- 右側商品區 -->
+      <!-- 右側商品區(等待開發) -->
       <div class="products-main">
         <div class="page-header">
           <h1>商品瀏覽</h1>
           <div class="sort-container">
-            <span class="sort-label">排序方式: </span>
-            <el-select 
-              v-model="sortValue" 
-              placeholder="排序" 
+            <span class="sort-label">排序方式 : </span>
+            <el-select
+              v-model="sortValue"
+              placeholder="排序"
               size="small"
               class="sort-select"
             >
@@ -155,15 +155,16 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import axios from "axios";
+
 import { Search } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
-import ProductCard from "./components/ProductCard.vue";
-import ProductDetailModal from "./components/ProductDetailModal.vue";
-import QuantitySelector from "./components/QuantitySelector.vue";
-import { useCartStore } from "@/stores/cart"; // 引入購物車 Store
-import { useUserInfoStore } from "@/stores/user"; // 引入用戶 Store
+import ProductCard from "./components/ProductCard.vue"; //引入組件
+import ProductDetailModal from "./components/ProductDetailModal.vue"; //引入組件
+import QuantitySelector from "./components/QuantitySelector.vue"; //引入組件
 
 // 初始化 Store
+import { useCartStore } from "@/stores/cart"; // 引入購物車 Store
+import { useUserInfoStore } from "@/stores/user"; // 引入用戶 Store
 const cartStore = useCartStore();
 const userStore = useUserInfoStore();
 
@@ -172,7 +173,6 @@ interface Tag {
   id: number;
   name: string;
 }
-
 interface Product {
   id: number;
   name: string;
@@ -188,24 +188,23 @@ interface Product {
 // 日期選擇 - 分開為兩個日期
 const startDate = ref("");
 const endDate = ref("");
-// 計算得出原本的 dateValue 格式
-const dateValue = computed(() => [startDate.value, endDate.value]);
+const dateValue = computed(() => [startDate.value, endDate.value]); //計算dateValue格式
 
-// 條件綁定
+// 搜索相關數據綁定
 const catValue = ref(""); // 分類 ID
 const tagValue = ref<string[]>([]); // 標籤（多個）
 const nameValue = ref(""); // 名稱
 const sortValue = ref("newest"); // 預設最新上架
 
-// 分頁相關
+// 分頁數據綁定
 const currentPage = ref(1);
 const pageSize = ref(8);
 const total = ref(0);
 
 // 資料狀態
-const products = ref<Product[]>([]);
-const loading = ref(false);
-const options = ref<{ value: number; label: string }[]>([]);
+const products = ref<Product[]>([]); //商品數據
+const loading = ref(false); //切換骨架屏
+const options = ref<{ value: number; label: string }[]>([]); //分類字串
 
 // 商品詳情彈窗
 const detailDialogVisible = ref(false);
@@ -257,10 +256,14 @@ const fetchProducts = async () => {
     }
 
     // 發送請求 - 使用 axios 的 paramsSerializer 處理複雜參數
+    // axios 預設會將參數轉為 URL 查詢字串
+    // 因此需透過 paramsSerializer，設定參數要怎麼轉成字串
+    // 比如加上 []，讓後端能辨識這是陣列
+    //它能幫你組合 ?key=value 的格式
     const res = await axios.get("http://127.0.0.1:3007/products", {
       params,
       paramsSerializer: (params) => {
-        const urlParams = new URLSearchParams();
+        const urlParams = new URLSearchParams(); // 建立一個 URL 參數的工具物件
 
         Object.entries(params).forEach(([key, value]) => {
           if (Array.isArray(value)) {
@@ -370,7 +373,7 @@ const handleAddToCart = (product: Product) => {
     ElMessage.warning("請先登入後再加入購物車");
     return;
   }
-  
+
   selectedCartProduct.value = product;
   quantityDialogVisible.value = true;
 
@@ -389,14 +392,19 @@ const addToCart = async (quantity: number) => {
 
   try {
     // 呼叫購物車 Store 的添加方法
-    await cartStore.addToCart({
-      id: selectedCartProduct.value.id,
-      name: selectedCartProduct.value.name,
-      price: selectedCartProduct.value.price,
-      image_url: selectedCartProduct.value.main_image_url
-    }, quantity);
-    
-    ElMessage.success(`已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`);
+    await cartStore.addToCart(
+      {
+        id: selectedCartProduct.value.id,
+        name: selectedCartProduct.value.name,
+        price: selectedCartProduct.value.price,
+        image_url: selectedCartProduct.value.main_image_url,
+      },
+      quantity
+    );
+
+    ElMessage.success(
+      `已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`
+    );
   } catch (error) {
     console.error("加入購物車失敗:", error);
     ElMessage.error("加入購物車失敗，請稍後再試");
@@ -611,10 +619,10 @@ onMounted(() => {
 /* 修復排序選擇器寬度和文字顯示問題 */
 :deep(.sort-select) {
   .el-input {
-    width: 100%; 
+    width: 100%;
     min-width: 140px;
   }
-  
+
   .el-input__wrapper {
     width: 100%;
   }
@@ -635,11 +643,11 @@ onMounted(() => {
   .products-main .page-header {
     flex-direction: column;
     align-items: flex-start;
-    
+
     h1 {
       margin-bottom: 16px;
     }
-    
+
     .sort-container {
       width: 100%;
       justify-content: flex-start;
