@@ -160,6 +160,12 @@ import { ElMessage } from "element-plus";
 import ProductCard from "./components/ProductCard.vue";
 import ProductDetailModal from "./components/ProductDetailModal.vue";
 import QuantitySelector from "./components/QuantitySelector.vue";
+import { useCartStore } from "@/stores/cart"; // 引入購物車 Store
+import { useUserInfoStore } from "@/stores/user"; // 引入用戶 Store
+
+// 初始化 Store
+const cartStore = useCartStore();
+const userStore = useUserInfoStore();
 
 // 定義接口
 interface Tag {
@@ -208,20 +214,23 @@ const selectedProduct = ref<Product | null>(null);
 // 購物車相關
 const quantityDialogVisible = ref(false);
 const selectedCartProduct = ref<Product | null>(null);
-const quantity = ref(1);
 
-// 查詢商品函數
+/**
+ * 查詢商品函數 - 使用後端 API 獲取商品列表
+ * 支援多種篩選條件：商品名稱、分類、標籤、上架時間，以及排序方式
+ */
 const fetchProducts = async () => {
   try {
     loading.value = true;
 
+    // 構建查詢參數
     const params: any = {
       page: currentPage.value,
       limit: pageSize.value,
-      is_frontend: "true", // 標識為前台請求
+      is_frontend: "true", // 標識為前台請求，只顯示上架商品
     };
 
-    // 處理日期範圍 - 使用計算得出的 dateValue
+    // 處理日期範圍
     if (dateValue.value[0] && dateValue.value[1]) {
       params["start_date"] = dateValue.value[0];
       params["end_date"] = dateValue.value[1];
@@ -247,7 +256,7 @@ const fetchProducts = async () => {
       params["sort"] = sortValue.value;
     }
 
-    // 發送請求
+    // 發送請求 - 使用 axios 的 paramsSerializer 處理複雜參數
     const res = await axios.get("http://127.0.0.1:3007/products", {
       params,
       paramsSerializer: (params) => {
@@ -265,16 +274,18 @@ const fetchProducts = async () => {
       },
     });
 
+    // 解析回應數據
     const rawData = res.data.data?.data || [];
     total.value = res.data.data?.total || 0;
 
-    // 查詢每筆商品的標籤
+    // 查詢每筆商品的標籤 - 使用 Promise.allSettled 並行處理所有請求
     const tagResults = await Promise.allSettled(
       rawData.map((p: any) =>
         axios.get(`http://127.0.0.1:3007/api/products/${p.id}/tags`)
       )
     );
 
+    // 將標籤數據添加到商品對象
     rawData.forEach((p: any, i: any) => {
       const tagRes = tagResults[i];
       p.tags =
@@ -286,12 +297,15 @@ const fetchProducts = async () => {
     products.value = rawData;
   } catch (err) {
     console.error("商品查詢失敗", err);
+    ElMessage.error("商品資料載入失敗，請稍後再試");
   } finally {
     loading.value = false;
   }
 };
 
-// 獲取分類列表
+/**
+ * 獲取分類列表 - 用於篩選欄的分類選擇器
+ */
 const fetchCategories = async () => {
   try {
     const res = await axios.get("http://127.0.0.1:3007/categories");
@@ -302,22 +316,30 @@ const fetchCategories = async () => {
     }));
   } catch (err) {
     console.error("分類查詢失敗", err);
+    ElMessage.error("分類資料載入失敗");
   }
 };
 
-// 分頁函數
+/**
+ * 分頁切換處理函數
+ * @param val 新的頁碼
+ */
 const handlePageChange = (val: number) => {
   currentPage.value = val;
   fetchProducts();
 };
 
-// 搜尋函數
+/**
+ * 搜尋按鈕處理函數 - 重置頁碼並執行查詢
+ */
 const handleSearch = () => {
-  currentPage.value = 1;
+  currentPage.value = 1; // 重置為第一頁
   fetchProducts();
 };
 
-// 重設函數
+/**
+ * 重設按鈕處理函數 - 清空所有篩選條件並重新查詢
+ */
 const handleReset = () => {
   startDate.value = "";
   endDate.value = "";
@@ -329,14 +351,26 @@ const handleReset = () => {
   fetchProducts();
 };
 
-// 開啟商品詳情
+/**
+ * 開啟商品詳情彈窗
+ * @param product 要查看的商品
+ */
 const openProductDetail = (product: Product) => {
   selectedProduct.value = product;
   detailDialogVisible.value = true;
 };
 
-// 處理加入購物車
+/**
+ * 處理加入購物車 - 打開數量選擇器
+ * @param product 要加入購物車的商品
+ */
 const handleAddToCart = (product: Product) => {
+  // 檢查用戶是否已登入
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning("請先登入後再加入購物車");
+    return;
+  }
+  
   selectedCartProduct.value = product;
   quantityDialogVisible.value = true;
 
@@ -346,18 +380,32 @@ const handleAddToCart = (product: Product) => {
   }
 };
 
-// 添加到購物車
-const addToCart = (quantity: number) => {
+/**
+ * 添加到購物車 - 使用購物車 API
+ * @param quantity 添加的數量
+ */
+const addToCart = async (quantity: number) => {
   if (!selectedCartProduct.value) return;
 
-  // 將來在這裡添加 API 調用
-  ElMessage.success(
-    `已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`
-  );
-  quantityDialogVisible.value = false;
+  try {
+    // 呼叫購物車 Store 的添加方法
+    await cartStore.addToCart({
+      id: selectedCartProduct.value.id,
+      name: selectedCartProduct.value.name,
+      price: selectedCartProduct.value.price,
+      image_url: selectedCartProduct.value.main_image_url
+    }, quantity);
+    
+    ElMessage.success(`已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`);
+  } catch (error) {
+    console.error("加入購物車失敗:", error);
+    ElMessage.error("加入購物車失敗，請稍後再試");
+  } finally {
+    quantityDialogVisible.value = false;
+  }
 };
 
-// 初始載入
+// 初始載入 - 獲取分類和商品數據
 onMounted(() => {
   fetchCategories();
   fetchProducts();
@@ -365,6 +413,7 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+/* 樣式部分保持不變 */
 .wrapper {
   width: 100%;
   min-height: 100vh;

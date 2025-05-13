@@ -18,7 +18,13 @@
       <div class="product-price">${{ product.price }}</div>
     </div>
     <div class="product-actions">
-      <button class="cart-btn" @click="$emit('add-to-cart', product)">
+      <!-- 使用 v-loading 顯示加入購物車時的載入狀態 -->
+      <button 
+        class="cart-btn" 
+        @click="handleAddToCart"
+        :disabled="isAddingToCart"
+        v-loading.fullscreen.lock="isAddingToCart"
+      >
         <i class="el-icon-shopping-cart"></i>
         加入購物車
       </button>
@@ -35,32 +41,24 @@ import { ElMessage } from 'element-plus';
 
 const cartStore = useCartStore();
 const userStore = useUserInfoStore();
+const isAddingToCart = ref(false); // 追蹤加入購物車的載入狀態
+
+// 定義 emit 事件
+const emit = defineEmits(['view', 'add-to-cart']);
 
 /**
- * 處理加入購物車function
+ * 處理加入購物車 - 檢查用戶登入狀態，然後發出事件
+ * 現在在卡片上點擊「加入購物車」會將該商品信息發送至父組件
  */
 const handleAddToCart = () => {
+  // 檢查用戶是否已登入
   if (!userStore.isLoggedIn) {
     ElMessage.warning('請先登入後再加入購物車');
     return;
   }
   
-  try {
-    cartStore.addToCart({
-      id: props.product.id,
-      name: props.product.name,
-      price: props.product.price,
-      image_url: props.product.main_image_url
-    }, 1); // 默認添加1個
-
-    ElMessage.success(`已將 ${props.product.name} 加入購物車`);
-  } catch (error) {
-    if (error instanceof Error) {
-      ElMessage.error(error.message);
-    } else {
-      ElMessage.error('加入購物車失敗');
-    }
-  }
+  // 直接發出事件到父組件處理
+  emit('add-to-cart', props.product);
 };
 
 // 定義接口
@@ -81,15 +79,22 @@ const props = defineProps<{
   product: Product;
 }>();
 
-defineEmits(['view', 'add-to-cart']);
-
 const imageError = ref(false);
 
-// 圖片 URL 處理
+/**
+ * 商品圖片 URL 處理 - 自動處理本地和遠程URL
+ * 如果圖片載入失敗，顯示預設圖片
+ */
 const imageUrl = computed(() => {
   if (imageError.value) return '/img/placeholder.png';
   if (!props.product.main_image_url) return '/img/placeholder.png';
-  return `http://127.0.0.1:3007${props.product.main_image_url}`;
+  
+  // 處理相對路徑
+  if (props.product.main_image_url.startsWith('/')) {
+    return `http://127.0.0.1:3007${props.product.main_image_url}`;
+  }
+  
+  return props.product.main_image_url;
 });
 
 // 最多顯示 3 個標籤
@@ -199,13 +204,18 @@ const handleImageError = () => {
       cursor: pointer;
       font-size: 14px;
       transition: background-color 0.3s ease;
+
+      &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
     }
     
     .view-btn {
       background-color: $primary-b-ll;
       color: $primary-b-d;
       
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: $primary-b-l;
       }
     }
@@ -214,7 +224,7 @@ const handleImageError = () => {
       background-color: $primary-b-d;
       color: white;
       
-      &:hover {
+      &:hover:not(:disabled) {
         background-color: $primary-b;
       }
       

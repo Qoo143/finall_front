@@ -31,10 +31,12 @@
           <p>{{ product.description || "暫無描述" }}</p>
         </div>
         <div class="actions">
+          <!-- 添加購物車按鈕，使用 v-loading 顯示載入狀態 -->
           <el-button
             type="primary"
             size="large"
             @click="addToCart"
+            :loading="isAddingToCart"
           >加入購物車</el-button>
           <el-button size="large">收藏商品</el-button>
         </div>
@@ -44,13 +46,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useCartStore } from '@/stores/cart';
 import { useUserInfoStore } from '@/stores/user';
 import { ElMessage } from 'element-plus';
 
 const cartStore = useCartStore();
 const userStore = useUserInfoStore();
+
+// 追蹤加入購物車的載入狀態
+const isAddingToCart = ref(false);
 
 // 定義接口
 interface Tag {
@@ -80,21 +85,36 @@ const emit = defineEmits<{
   (e: 'add-to-cart', product: Product): void;
 }>();
 
-// 使用計算屬性將 props.visible 代理為 visibleValue
+/**
+ * 雙向綁定 visible 屬性
+ * 使用計算屬性實現 v-model 的雙向綁定
+ */
 const visibleValue = computed({
   get: () => props.visible,
   set: (value) => emit('update:visible', value)
 });
 
-// 獲取商品圖片 URL
+/**
+ * 處理商品圖片 URL
+ * 自動處理相對路徑和絕對路徑
+ */
 const getProductImageUrl = computed(() => {
   if (!props.product?.main_image_url) return "/img/placeholder.png";
-  return `http://127.0.0.1:3007${props.product.main_image_url}`;
+  
+  // 處理相對路徑
+  if (props.product.main_image_url.startsWith('/')) {
+    return `http://127.0.0.1:3007${props.product.main_image_url}`;
+  }
+  
+  return props.product.main_image_url;
 });
 
-
-// 處理加入購物車
-const addToCart = () => {
+/**
+ * 處理加入購物車
+ * 檢查用戶登入狀態，然後發出事件
+ */
+const addToCart = async () => {
+  // 檢查用戶是否已登入
   if (!userStore.isLoggedIn) {
     ElMessage.warning('請先登入後再加入購物車');
     return;
@@ -102,23 +122,8 @@ const addToCart = () => {
   
   if (!props.product) return;
   
-  try {
-    cartStore.addToCart({
-      id: props.product.id,
-      name: props.product.name,
-      price: props.product.price,
-      image_url: props.product.main_image_url
-    }, 1); // 默認添加1個，這裡可以更改為使用數量選擇
-
-    ElMessage.success(`已將 ${props.product.name} 加入購物車`);
-    emit('add-to-cart', props.product);
-  } catch (error) {
-    if (error instanceof Error) {
-      ElMessage.error(error.message);
-    } else {
-      ElMessage.error('加入購物車失敗');
-    }
-  }
+  // 發出事件到父組件處理
+  emit('add-to-cart', props.product);
 };
 </script>
 
