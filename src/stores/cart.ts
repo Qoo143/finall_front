@@ -42,24 +42,24 @@ export const useCartStore = defineStore('cart', () => {
    * 獲取購物車內容
    */
   async function fetchCart() {
-    
     if (!userStore.isLoggedIn) {
       return;
     }
-
+  
     loading.value = true;
     try {
       console.log('獲取購物車 - 開始請求');
       
+      // 直接使用現有 API，但處理不同的響應格式
       const response:any = await getCartAPI(userStore.token);
       console.log('獲取購物車 - 響應:', response);
       
-      // 檢查響應格式並正確解析
-      if (response.data && response.code === 0 && response.data.data) {
-        const cartData = response.data.data;
+      // 調整邏輯：response 已經是 data 本身了
+      if (response && response.code === 0) {
+        const cartData = response.data;
         console.log('獲取購物車 - 解析的數據:', cartData);
         
-        if (cartData.items && Array.isArray(cartData.items)) {
+        if (cartData && cartData.items && Array.isArray(cartData.items)) {
           items.value = cartData.items;
           console.log('購物車商品數量:', items.value.length);
         } else {
@@ -110,10 +110,10 @@ export const useCartStore = defineStore('cart', () => {
         token: userStore.token.substring(0, 20) + '...' 
       });
       
-      const response = await addToCartAPI(userStore.token, item.id, quantity);
+      const response:any = await addToCartAPI(userStore.token, item.id, quantity);
       console.log('添加購物車 - 響應:', response);
       
-      if (response.data && response.data.code === 0) {
+      if (response && response.code === 0) {
         ElMessage.success(`已成功加入購物車: ${item.name} x ${quantity}`);
         
         // 重新載入購物車資料
@@ -157,10 +157,10 @@ export const useCartStore = defineStore('cart', () => {
       console.log('更新購物車 - 開始請求');
       console.log('更新購物車 - 參數:', { itemId, quantity });
       
-      const response = await updateCartItemAPI(userStore.token, itemId, quantity);
+      const response:any = await updateCartItemAPI(userStore.token, itemId, quantity);
       console.log('更新購物車 - 響應:', response);
       
-      if (response.data && response.data.code === 0) {
+      if (response && response.code === 0) {
         // 更新本地狀態
         const index = items.value.findIndex(item => item.id === itemId);
         if (index !== -1) {
@@ -192,10 +192,10 @@ export const useCartStore = defineStore('cart', () => {
       console.log('移除購物車商品 - 開始請求');
       console.log('移除購物車商品 - 參數:', { itemId });
       
-      const response = await removeFromCartAPI(userStore.token, itemId);
+      const response:any = await removeFromCartAPI(userStore.token, itemId);
       console.log('移除購物車商品 - 響應:', response);
       
-      if (response.data && response.data.code === 0) {
+      if (response && response.code === 0) {
         // 從本地狀態中移除
         const removedItem = items.value.find(item => item.id === itemId);
         items.value = items.value.filter(item => item.id !== itemId);
@@ -229,10 +229,10 @@ export const useCartStore = defineStore('cart', () => {
     try {
       console.log('清空購物車 - 開始請求');
       
-      const response = await clearCartAPI(userStore.token);
+      const response:any = await clearCartAPI(userStore.token);
       console.log('清空購物車 - 響應:', response);
       
-      if (response.data && response.data.code === 0) {
+      if (response && response.code === 0) {
         // 清空本地狀態
         items.value = [];
         ElMessage.success('購物車已清空');
