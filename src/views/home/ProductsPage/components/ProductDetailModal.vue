@@ -122,7 +122,7 @@ const handleAddToCart = () => {
 
   .el-dialog__header {
     background-color: $primary-b-d;
-    color: white;
+    color: rgb(54, 116, 100);
     padding: 16px 20px;
 
     .el-dialog__title {

@@ -1,12 +1,5 @@
+// src/api/cart.ts
 import instance from "@/http/index";
-
-// 定義購物車項目介面
-interface CartItemRequest {
-  productId: number;
-  quantity: number;
-}
-
-// 定義購物車 API 功能
 
 /**
  * 獲取用戶購物車內容
@@ -18,7 +11,7 @@ export function getCart(token: string) {
     url: "/api/cart",
     method: "GET",
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
     }
   });
 }
@@ -31,6 +24,7 @@ export function getCart(token: string) {
  * @returns 操作結果的 Promise
  */
 export function addToCart(token: string, productId: number, quantity: number) {
+  console.log('添加購物車請求參數:', { token, productId, quantity });
   return instance({
     url: "/api/cart/items",
     method: "POST",
@@ -39,7 +33,7 @@ export function addToCart(token: string, productId: number, quantity: number) {
       quantity
     },
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       "Content-Type": "application/json"
     }
   });
@@ -60,7 +54,7 @@ export function updateCartItem(token: string, itemId: number, quantity: number) 
       quantity
     },
     headers: {
-      Authorization: `${token}`,
+      Authorization: token,
       "Content-Type": "application/json"
     }
   });
@@ -77,7 +71,7 @@ export function removeFromCart(token: string, itemId: number) {
     url: `/api/cart/items/${itemId}`,
     method: "DELETE",
     headers: {
-      Authorization: `${token}`
+      Authorization: token,
     }
   });
 }
@@ -92,7 +86,22 @@ export function clearCart(token: string) {
     url: "/api/cart",
     method: "DELETE",
     headers: {
-      Authorization: `${token}`
+      Authorization: token,
+    }
+  });
+}
+
+/**
+ * 獲取購物車中的商品數量
+ * @param token 用戶令牌
+ * @returns 購物車商品數量的 Promise
+ */
+export function getCartCount(token: string) {
+  return instance({
+    url: "/api/cart/count",
+    method: "GET",
+    headers: {
+      Authorization: token,
     }
   });
 }

@@ -1,3 +1,4 @@
+// src/App.vue
 <template>
   <div class="page">
     <RouterView />
@@ -12,10 +13,12 @@ import { useUserInfoStore } from "@/stores/user";
 const cartStore = useCartStore();
 const userStore = useUserInfoStore();
 
-onMounted(() => {
-  // 當用戶已登入時，加載購物車
+onMounted(async () => {
+  // 當用戶已登入時，初始化購物車
   if (userStore.isLoggedIn) {
-    cartStore.loadCartFromLocalStorage();
+    console.log('App初始化 - 用戶已登入，初始化購物車');
+    await cartStore.initCart();
+    console.log('App初始化 - 購物車商品數:', cartStore.items.length);
   }
 });
 </script>

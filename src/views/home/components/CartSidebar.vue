@@ -85,37 +85,52 @@ import { useCartStore } from '@/stores/cart';
 import { useUserInfoStore } from '@/stores/user';
 import { Delete, Close, ShoppingCart } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 
-// 使用 defineModel 進行雙向綁定
-const visible = defineModel<boolean>('visible', { default: false });
-
-// 定義事件
-const emit = defineEmits(['checkout']);
-
-// 使用購物車 store
+// 初始化 Store 和路由
 const cartStore = useCartStore();
 const userStore = useUserInfoStore();
+const router = useRouter();
 
-// 在組件掛載時自動獲取購物車數據
-onMounted(() => {
-  if (userStore.isLoggedIn) {
-    cartStore.fetchCart();
-  }
-});
+// 接收父組件的props
+const props = defineProps<{
+  visible: boolean;
+}>();
+
+// 定義事件
+const emit = defineEmits<{
+  (e: 'update:visible', value: boolean): void;
+  (e: 'checkout'): void;
+}>();
 
 // 關閉購物車側邊欄
 const closeCart = () => {
-  visible.value = false;
+  emit('update:visible', false);
 };
 
 // 更新商品數量
 const updateQuantity = (itemId: number, quantity: number) => {
+  // 確保用戶已登入
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('請先登入');
+    router.push('/login');
+    closeCart();
+    return;
+  }
+  
   cartStore.updateQuantity(itemId, quantity);
 };
 
 // 移除商品
 const removeItem = (itemId: number) => {
+  // 確保用戶已登入
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('請先登入');
+    router.push('/login');
+    closeCart();
+    return;
+  }
+  
   cartStore.removeFromCart(itemId);
 };
 
@@ -128,15 +143,22 @@ const getProductImageUrl = (url: string) => {
 
 // 結帳功能
 const checkout = () => {
-  // 檢查用戶是否已登入
+  // 確保用戶已登入
   if (!userStore.isLoggedIn) {
-    ElMessage.warning('請先登入後再結帳');
+    ElMessage.warning('請先登入才能結帳');
+    router.push('/login');
+    closeCart();
     return;
   }
   
-  // 發出結帳事件
+  // 確保購物車不為空
+  if (cartStore.items.length === 0) {
+    ElMessage.warning('購物車為空，請先添加商品');
+    return;
+  }
+  
+  ElMessage.success('前往結帳頁面');
   emit('checkout');
-  // 關閉購物車側邊欄
   closeCart();
 };
 </script>
