@@ -112,7 +112,7 @@ const goCheckout = () => {
     max-width: 1440px; // 設置一個最大寬度
     height: 100%;
     margin: 0 auto; // 居中
-    padding: 0 1rem;
+    padding-left: 1rem;
     display: grid;
     grid-template-columns: 1fr auto 1fr; // 三列布局：左側、中間、右側
     align-items: center;
