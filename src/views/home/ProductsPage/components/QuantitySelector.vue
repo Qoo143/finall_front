@@ -1,79 +1,111 @@
 <template>
   <el-dialog
-    v-model="visibleValue"
+    v-model="visibleModel"
     title="選擇數量"
     width="320px"
     center
     :show-close="true"
     custom-class="quantity-dialog"
   >
-    <div class="quantity-selector" v-if="product">
+    <div class="quantity-selector" v-if="productModel">
       <img
-        :src="getProductImageUrl"
-        :alt="product.name"
+        :src="productImageUrl"
+        :alt="productModel.name"
         class="product-thumbnail"
       />
       <div class="product-info-mini">
-        <div class="product-name">{{ product.name }}</div>
-        <div class="product-price">${{ product.price }}</div>
+        <div class="product-name">{{ productModel.name }}</div>
+        <div class="product-price">${{ productModel.price }}</div>
       </div>
       <div class="quantity-control">
         <span class="label">數量:</span>
         <el-input-number
           v-model="quantityValue"
           :min="1"
-          :max="product.stock || 99"
+          :max="productModel.stock || 99"
           size="small"
         />
       </div>
       <div class="quantity-actions">
-        <el-button @click="visibleValue = false">取消</el-button>
-        <el-button type="primary" @click="confirmQuantity">確認</el-button>
+        <el-button @click="cancelSelection">取消</el-button>
+        <el-button type="primary" :loading="isLoadingModel" @click="confirmSelection">確認</el-button>
       </div>
     </div>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 
-// 定義接口
+// 定義商品介面
+interface Tag {
+  id: number;
+  name: string;
+}
+
 interface Product {
   id: number;
   name: string;
+  description?: string;
   price: number;
   stock: number;
+  is_active?: number;
+  category_id?: number;
   main_image_url: string;
+  tags?: Tag[];
 }
 
-const props = defineProps<{
-  visible: boolean;
-  product: Product | null;
-}>();
+// 使用 defineModel 進行雙向綁定，確保類型正確
+const visibleModel = defineModel<boolean>('visible', { default: false });
+const productModel = defineModel<Product | null>('product', { default: null });
+const isLoadingModel = defineModel<boolean>('isLoading', { default: false });
+const quantityModel = defineModel<number>('quantity', { default: 1 });
 
-const emit = defineEmits<{
-  (e: 'update:visible', visible: boolean): void;
-  (e: 'confirm', quantity: number): void;
-}>();
-
-// 使用計算屬性將 props.visible 代理為 visibleValue
-const visibleValue = computed({
-  get: () => props.visible,
-  set: (value) => emit('update:visible', value)
-});
-
-// 數量
+// 本地狀態，不直接修改 model，等確認後再修改
 const quantityValue = ref(1);
 
+// 定義事件
+const emit = defineEmits(['confirm', 'cancel']);
+
 // 獲取商品圖片 URL
-const getProductImageUrl = computed(() => {
-  if (!props.product?.main_image_url) return "/img/placeholder.png";
-  return `http://127.0.0.1:3007${props.product.main_image_url}`;
+const productImageUrl = computed(() => {
+  if (!productModel.value?.main_image_url) return "/img/placeholder.png";
+  
+  if (productModel.value.main_image_url.startsWith('/')) {
+    return `http://127.0.0.1:3007${productModel.value.main_image_url}`;
+  }
+  
+  return productModel.value.main_image_url;
 });
 
-// 確認數量
-const confirmQuantity = () => {
+// 監聽 dialog 顯示狀態，重置數量
+const resetQuantity = () => {
+  quantityValue.value = 1;
+};
+
+// 監聽 visibleModel 變化
+watch(visibleModel, (newValue) => {
+  if (newValue) {
+    resetQuantity();
+  }
+});
+
+// 取消選擇
+const cancelSelection = () => {
+  visibleModel.value = false;
+  emit('cancel');
+};
+
+// 確認選擇
+const confirmSelection = () => {
+  // 更新父組件的數量
+  quantityModel.value = quantityValue.value;
+  
+  // 發出確認事件
   emit('confirm', quantityValue.value);
+  
+  // 關閉對話框
+  visibleModel.value = false;
 };
 </script>
 

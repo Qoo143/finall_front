@@ -21,7 +21,7 @@
             class="sidebar-select"
           >
             <el-option
-              v-for="item in options"
+              v-for="item in categories"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -71,6 +71,7 @@
             type="primary"
             class="search-btn"
             :icon="Search"
+            :loading="isLoading"
           >
             搜尋
           </el-button>
@@ -80,7 +81,7 @@
         </div>
       </div>
 
-      <!-- 右側商品區(等待開發) -->
+      <!-- 右側商品區 -->
       <div class="products-main">
         <div class="page-header">
           <h1>商品瀏覽</h1>
@@ -100,14 +101,16 @@
         </div>
 
         <!-- 商品網格 -->
-        <div v-if="!loading" class="products-grid">
+        <div v-if="!isLoading" class="products-grid">
           <template v-if="products.length > 0">
             <ProductCard
-              v-for="product in products"
+              v-for="(product, index) in products"
               :key="product.id"
-              :product="product"
-              @view="openProductDetail"
-              @add-to-cart="handleAddToCart"
+              v-model:product="products[index]"
+              v-model:isLoading="isLoading"
+              v-model:selectedProduct="selectedProduct"
+              @addToCart="openQuantitySelector"
+              @viewDetails="openProductDetail"
             />
           </template>
           <div v-else class="no-products">
@@ -136,35 +139,37 @@
 
     <!-- 商品詳情彈窗 -->
     <ProductDetailModal
-      v-if="detailDialogVisible"
       v-model:visible="detailDialogVisible"
-      :product="selectedProduct"
-      @add-to-cart="handleAddToCart"
+      v-model:product="selectedProduct"
+      v-model:isLoading="isLoading"
+      @addToCart="openQuantitySelector"
     />
 
     <!-- 數量選擇彈窗 -->
     <QuantitySelector
-      v-if="quantityDialogVisible"
       v-model:visible="quantityDialogVisible"
-      :product="selectedCartProduct"
+      v-model:product="selectedCartProduct"
+      v-model:isLoading="isLoading"
+      v-model:quantity="selectedQuantity"
       @confirm="addToCart"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import axios from "axios";
-
 import { Search } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
-import ProductCard from "./components/ProductCard.vue"; //引入組件
-import ProductDetailModal from "./components/ProductDetailModal.vue"; //引入組件
-import QuantitySelector from "./components/QuantitySelector.vue"; //引入組件
+import ProductCard from "./components/ProductCard.vue";
+import ProductDetailModal from "./components/ProductDetailModal.vue";
+import QuantitySelector from "./components/QuantitySelector.vue";
 
-// 初始化 Store
-import { useCartStore } from "@/stores/cart"; // 引入購物車 Store
-import { useUserInfoStore } from "@/stores/user"; // 引入用戶 Store
+// 導入 API 和 Store
+import { useCartStore } from "@/stores/cart";
+import { useUserInfoStore } from "@/stores/user";
+import { addToCart as apiAddToCart } from "@/api/cart";
+
 const cartStore = useCartStore();
 const userStore = useUserInfoStore();
 
@@ -173,54 +178,60 @@ interface Tag {
   id: number;
   name: string;
 }
+
 interface Product {
   id: number;
   name: string;
-  description: string;
+  description?: string;
   price: number;
   stock: number;
-  is_active: number;
-  category_id: number;
+  is_active?: number;
+  category_id?: number;
   main_image_url: string;
-  tags: Tag[];
+  tags?: Tag[];
 }
 
-// 日期選擇 - 分開為兩個日期
+// 篩選條件状态
+const nameValue = ref("");
+const catValue = ref("");
+const tagValue = ref<string[]>([]);
 const startDate = ref("");
 const endDate = ref("");
-const dateValue = computed(() => [startDate.value, endDate.value]); //計算dateValue格式
+const sortValue = ref("newest");
 
-// 搜索相關數據綁定
-const catValue = ref(""); // 分類 ID
-const tagValue = ref<string[]>([]); // 標籤（多個）
-const nameValue = ref(""); // 名稱
-const sortValue = ref("newest"); // 預設最新上架
-
-// 分頁數據綁定
+// 分頁相關
 const currentPage = ref(1);
 const pageSize = ref(8);
 const total = ref(0);
 
-// 資料狀態
-const products = ref<Product[]>([]); //商品數據
-const loading = ref(false); //切換骨架屏
-const options = ref<{ value: number; label: string }[]>([]); //分類字串
+// 商品数据
+const products = ref<Product[]>([]);
+const categories = ref<{ value: number; label: string }[]>([]);
+const isLoading = ref(false);
 
-// 商品詳情彈窗
+// 模態框相關
 const detailDialogVisible = ref(false);
 const selectedProduct = ref<Product | null>(null);
-
-// 購物車相關
 const quantityDialogVisible = ref(false);
 const selectedCartProduct = ref<Product | null>(null);
+const selectedQuantity = ref(1);
+
+/**
+ * 日期計算屬性 - 用於API請求
+ */
+const dateValue = computed(() => {
+  if (startDate.value && endDate.value) {
+    return [startDate.value, endDate.value];
+  }
+  return ["", ""];
+});
 
 /**
  * 查詢商品函數 - 使用後端 API 獲取商品列表
- * 支援多種篩選條件：商品名稱、分類、標籤、上架時間，以及排序方式
  */
 const fetchProducts = async () => {
   try {
-    loading.value = true;
+    isLoading.value = true;
 
     // 構建查詢參數
     const params: any = {
@@ -255,15 +266,11 @@ const fetchProducts = async () => {
       params["sort"] = sortValue.value;
     }
 
-    // 發送請求 - 使用 axios 的 paramsSerializer 處理複雜參數
-    // axios 預設會將參數轉為 URL 查詢字串
-    // 因此需透過 paramsSerializer，設定參數要怎麼轉成字串
-    // 比如加上 []，讓後端能辨識這是陣列
-    //它能幫你組合 ?key=value 的格式
+    // 發送請求
     const res = await axios.get("http://127.0.0.1:3007/products", {
       params,
       paramsSerializer: (params) => {
-        const urlParams = new URLSearchParams(); // 建立一個 URL 參數的工具物件
+        const urlParams = new URLSearchParams();
 
         Object.entries(params).forEach(([key, value]) => {
           if (Array.isArray(value)) {
@@ -281,7 +288,7 @@ const fetchProducts = async () => {
     const rawData = res.data.data?.data || [];
     total.value = res.data.data?.total || 0;
 
-    // 查詢每筆商品的標籤 - 使用 Promise.allSettled 並行處理所有請求
+    // 查詢每筆商品的標籤
     const tagResults = await Promise.allSettled(
       rawData.map((p: any) =>
         axios.get(`http://127.0.0.1:3007/api/products/${p.id}/tags`)
@@ -302,18 +309,18 @@ const fetchProducts = async () => {
     console.error("商品查詢失敗", err);
     ElMessage.error("商品資料載入失敗，請稍後再試");
   } finally {
-    loading.value = false;
+    isLoading.value = false;
   }
 };
 
 /**
- * 獲取分類列表 - 用於篩選欄的分類選擇器
+ * 獲取分類列表
  */
 const fetchCategories = async () => {
   try {
     const res = await axios.get("http://127.0.0.1:3007/categories");
     const raw = res.data.data || [];
-    options.value = raw.map((c: any) => ({
+    categories.value = raw.map((c: any) => ({
       value: c.id,
       label: c.name,
     }));
@@ -325,7 +332,6 @@ const fetchCategories = async () => {
 
 /**
  * 分頁切換處理函數
- * @param val 新的頁碼
  */
 const handlePageChange = (val: number) => {
   currentPage.value = val;
@@ -333,7 +339,7 @@ const handlePageChange = (val: number) => {
 };
 
 /**
- * 搜尋按鈕處理函數 - 重置頁碼並執行查詢
+ * 搜尋按鈕處理函數
  */
 const handleSearch = () => {
   currentPage.value = 1; // 重置為第一頁
@@ -341,7 +347,7 @@ const handleSearch = () => {
 };
 
 /**
- * 重設按鈕處理函數 - 清空所有篩選條件並重新查詢
+ * 重設按鈕處理函數
  */
 const handleReset = () => {
   startDate.value = "";
@@ -356,7 +362,6 @@ const handleReset = () => {
 
 /**
  * 開啟商品詳情彈窗
- * @param product 要查看的商品
  */
 const openProductDetail = (product: Product) => {
   selectedProduct.value = product;
@@ -364,19 +369,17 @@ const openProductDetail = (product: Product) => {
 };
 
 /**
- * 處理加入購物車 - 打開數量選擇器
- * @param product 要加入購物車的商品
+ * 開啟數量選擇彈窗
  */
-const handleAddToCart = (product: Product) => {
-  // 檢查用戶是否已登入
+const openQuantitySelector = (product: Product) => {
   if (!userStore.isLoggedIn) {
-    ElMessage.warning("請先登入後再加入購物車");
+    ElMessage.warning('請先登入後再加入購物車');
     return;
   }
-
+  
   selectedCartProduct.value = product;
   quantityDialogVisible.value = true;
-
+  
   // 如果商品詳情彈窗正在顯示，則關閉它
   if (detailDialogVisible.value) {
     detailDialogVisible.value = false;
@@ -384,36 +387,33 @@ const handleAddToCart = (product: Product) => {
 };
 
 /**
- * 添加到購物車 - 使用購物車 API
- * @param quantity 添加的數量
+ * 加入購物車
  */
 const addToCart = async (quantity: number) => {
   if (!selectedCartProduct.value) return;
-
+  
   try {
-    // 呼叫購物車 Store 的添加方法
-    await cartStore.addToCart(
-      {
-        id: selectedCartProduct.value.id,
-        name: selectedCartProduct.value.name,
-        price: selectedCartProduct.value.price,
-        image_url: selectedCartProduct.value.main_image_url,
-      },
-      quantity
-    );
-
-    ElMessage.success(
-      `已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`
-    );
+    isLoading.value = true;
+    
+    // 使用購物車 Store 添加商品
+    await cartStore.addToCart({
+      id: selectedCartProduct.value.id,
+      name: selectedCartProduct.value.name,
+      price: selectedCartProduct.value.price,
+      image_url: selectedCartProduct.value.main_image_url
+    }, quantity);
+    
+    ElMessage.success(`已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`);
   } catch (error) {
-    console.error("加入購物車失敗:", error);
-    ElMessage.error("加入購物車失敗，請稍後再試");
+    console.error('加入購物車失敗:', error);
+    ElMessage.error('加入購物車失敗，請稍後再試');
   } finally {
+    isLoading.value = false;
     quantityDialogVisible.value = false;
   }
 };
 
-// 初始載入 - 獲取分類和商品數據
+// 初始載入
 onMounted(() => {
   fetchCategories();
   fetchProducts();
@@ -421,7 +421,6 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-/* 樣式部分保持不變 */
 .wrapper {
   width: 100%;
   min-height: 100vh;
@@ -467,7 +466,7 @@ onMounted(() => {
     }
   }
 
-  /* 添加新的垂直布局樣式 */
+  /* 垂直布局樣式 */
   .date-inputs-vertical {
     display: flex;
     flex-direction: column;
@@ -488,7 +487,7 @@ onMounted(() => {
     .reset-btn {
       width: 100%;
       height: 40px;
-      margin: 0; /* 清除所有邊距 */
+      margin: 0;
     }
 
     .search-btn {
@@ -505,7 +504,7 @@ onMounted(() => {
       background-color: $bg-3;
       color: $text-d;
       border: none;
-      margin-left: 0 !important; /* 確保覆蓋 Element Plus 的樣式 */
+      margin-left: 0 !important;
 
       &:hover {
         background-color: $primary-b-ll;
@@ -517,21 +516,21 @@ onMounted(() => {
 /* 右側主內容區 */
 .products-main {
   flex: 1;
-  min-width: 0; // 避免彈性項目超出容器
+  min-width: 0;
 
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 24px;
-    flex-wrap: nowrap; /* 防止在小螢幕上換行 */
+    flex-wrap: nowrap;
 
     h1 {
       font-size: 28px;
       font-weight: 700;
       color: $primary-b-d;
-      margin-right: 20px; /* 確保標題與排序區域有間距 */
-      white-space: nowrap; /* 防止標題折疊 */
+      margin-right: 20px;
+      white-space: nowrap;
     }
 
     .sort-container {
@@ -539,17 +538,17 @@ onMounted(() => {
       align-items: center;
       justify-content: end;
       gap: 10px;
-      min-width: 280px; /* 給予足夠寬度 */
-      white-space: nowrap; /* 防止文字折疊 */
+      min-width: 280px;
+      white-space: nowrap;
 
       .sort-label {
         color: $text-d;
         font-size: 14px;
-        flex-shrink: 0; /* 防止文字壓縮 */
+        flex-shrink: 0;
       }
 
       .sort-select {
-        min-width: 140px; /* 給選擇器足夠寬度 */
+        min-width: 140px;
         width: auto;
       }
     }
@@ -558,7 +557,7 @@ onMounted(() => {
   .products-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, auto); // 明確指定兩行
+    grid-template-rows: repeat(2, auto);
     gap: 24px;
     margin-bottom: 2rem;
 
@@ -616,7 +615,7 @@ onMounted(() => {
   border-radius: 8px;
 }
 
-/* 修復排序選擇器寬度和文字顯示問題 */
+/* 排序選擇器樣式修復 */
 :deep(.sort-select) {
   .el-input {
     width: 100%;
@@ -628,7 +627,6 @@ onMounted(() => {
   }
 }
 
-/* 確保下拉選單有足夠寬度 */
 :deep(.el-select-dropdown) {
   min-width: 160px !important;
 }
@@ -638,7 +636,7 @@ onMounted(() => {
   min-width: 140px;
 }
 
-/* 媒體查詢，在更小的屏幕上調整排序區域 */
+/* 媒體查詢適配 */
 @media (max-width: 768px) {
   .products-main .page-header {
     flex-direction: column;

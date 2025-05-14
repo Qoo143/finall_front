@@ -18,50 +18,24 @@
       <div class="product-price">${{ product.price }}</div>
     </div>
     <div class="product-actions">
-      <!-- 使用 v-loading 顯示加入購物車時的載入狀態 -->
       <button 
         class="cart-btn" 
         @click="handleAddToCart"
-        :disabled="isAddingToCart"
-        v-loading.fullscreen.lock="isAddingToCart"
+        :disabled="isLoading"
       >
-        <i class="el-icon-shopping-cart"></i>
         加入購物車
       </button>
-      <button class="view-btn" @click="$emit('view', product)">查看詳情</button>
+      <button class="view-btn" @click="handleViewDetails">查看詳情</button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useCartStore } from '@/stores/cart';
 import { useUserInfoStore } from '@/stores/user';
 import { ElMessage } from 'element-plus';
 
-const cartStore = useCartStore();
-const userStore = useUserInfoStore();
-const isAddingToCart = ref(false); // 追蹤加入購物車的載入狀態
-
-// 定義 emit 事件
-const emit = defineEmits(['view', 'add-to-cart']);
-
-/**
- * 處理加入購物車 - 檢查用戶登入狀態，然後發出事件
- * 現在在卡片上點擊「加入購物車」會將該商品信息發送至父組件
- */
-const handleAddToCart = () => {
-  // 檢查用戶是否已登入
-  if (!userStore.isLoggedIn) {
-    ElMessage.warning('請先登入後再加入購物車');
-    return;
-  }
-  
-  // 直接發出事件到父組件處理
-  emit('add-to-cart', props.product);
-};
-
-// 定義接口
+// 定義介面
 interface Tag {
   id: number;
   name: string;
@@ -70,36 +44,69 @@ interface Tag {
 interface Product {
   id: number;
   name: string;
+  description?: string;
   price: number;
+  stock: number;
+  is_active?: number;
+  category_id?: number;
   main_image_url: string;
-  tags: Tag[];
+  tags?: Tag[];
 }
 
-const props = defineProps<{
-  product: Product;
-}>();
+const userStore = useUserInfoStore();
+
+// 使用 defineModel 進行雙向綁定，確保類型正確
+const product = defineModel<Product>('product', { required: true });
+const isLoading = defineModel<boolean>('isLoading', { default: false });
+const selectedProduct = defineModel<Product | null>('selectedProduct', { default: null });
+
+// 定義事件，用於通知父組件
+const emit = defineEmits(['addToCart', 'viewDetails']);
+
+/**
+ * 處理加入購物車 - 檢查用戶登入狀態，然後發出事件
+ */
+const handleAddToCart = () => {
+  // 檢查用戶是否已登入
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('請先登入後再加入購物車');
+    return;
+  }
+  
+  // 發出事件到父組件處理
+  emit('addToCart', product.value);
+};
+
+/**
+ * 處理查看詳情
+ */
+const handleViewDetails = () => {
+  // 更新選中的商品
+  selectedProduct.value = product.value;
+  // 通知父組件
+  emit('viewDetails', product.value);
+};
 
 const imageError = ref(false);
 
 /**
  * 商品圖片 URL 處理 - 自動處理本地和遠程URL
- * 如果圖片載入失敗，顯示預設圖片
  */
 const imageUrl = computed(() => {
   if (imageError.value) return '/img/placeholder.png';
-  if (!props.product.main_image_url) return '/img/placeholder.png';
+  if (!product.value.main_image_url) return '/img/placeholder.png';
   
   // 處理相對路徑
-  if (props.product.main_image_url.startsWith('/')) {
-    return `http://127.0.0.1:3007${props.product.main_image_url}`;
+  if (product.value.main_image_url.startsWith('/')) {
+    return `http://127.0.0.1:3007${product.value.main_image_url}`;
   }
   
-  return props.product.main_image_url;
+  return product.value.main_image_url;
 });
 
 // 最多顯示 3 個標籤
 const displayTags = computed(() => {
-  return (props.product.tags || []).slice(0, 3);
+  return (product.value.tags || []).slice(0, 3);
 });
 
 // 圖片載入錯誤處理
@@ -118,7 +125,6 @@ const handleImageError = () => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  max-height: 400px; // 限制最大高度
   
   &:hover {
     transform: translateY(-5px);
@@ -127,7 +133,7 @@ const handleImageError = () => {
   
   .product-image {
     position: relative;
-    height: 180px; // 降低圖片高度
+    height: 200px;
     overflow: hidden;
     
     img {
@@ -158,19 +164,18 @@ const handleImageError = () => {
         border-radius: 4px;
         font-size: 12px;
         font-weight: 500;
-        backdrop-filter: blur(2px);
       }
     }
   }
   
   .product-info {
-    padding: 12px 16px;
-    flex-grow: 0; // 不要自動伸展
+    padding: 16px;
+    flex-grow: 1;
     
     .product-name {
       font-size: 16px;
       font-weight: 600;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
       color: $primary-b-d;
       // 限制為兩行，超出顯示省略號
       overflow: hidden;
@@ -180,7 +185,6 @@ const handleImageError = () => {
       line-clamp: 2;
       -webkit-box-orient: vertical;
       line-height: 1.3;
-      height: 2.6em; // 固定高度為兩行
     }
     
     .product-price {
@@ -194,7 +198,6 @@ const handleImageError = () => {
     padding: 0 16px 16px;
     display: flex;
     gap: 8px;
-    margin-top: auto; // 推到底部
     
     .view-btn, .cart-btn {
       flex: 1;
@@ -227,10 +230,6 @@ const handleImageError = () => {
       
       &:hover:not(:disabled) {
         background-color: $primary-b;
-      }
-      
-      i {
-        margin-right: 4px;
       }
     }
   }

@@ -1,25 +1,25 @@
 <template>
   <el-dialog
-    v-model="visibleValue"
+    v-model="visibleModel"
     title="商品詳情"
     width="80%"
     top="5vh"
     destroy-on-close
   >
-    <div v-if="product" class="product-detail">
+    <div v-if="productModel" class="product-detail">
       <div class="detail-image">
         <img
-          :src="getProductImageUrl"
-          :alt="product.name"
+          :src="productImageUrl"
+          :alt="productModel.name"
         />
       </div>
       <div class="detail-info">
-        <h2>{{ product.name }}</h2>
-        <div class="price">${{ product.price }}</div>
-        <div class="stock">庫存: {{ product.stock }}</div>
+        <h2>{{ productModel.name }}</h2>
+        <div class="price">${{ productModel.price }}</div>
+        <div class="stock">庫存: {{ productModel.stock }}</div>
         <div class="tags">
           <span
-            v-for="tag in product.tags"
+            v-for="tag in productModel.tags"
             :key="tag.id"
             class="tag"
           >
@@ -28,13 +28,14 @@
         </div>
         <div class="description">
           <h3>商品描述</h3>
-          <p>{{ product.description || "暫無描述" }}</p>
+          <p>{{ productModel.description || "暫無描述" }}</p>
         </div>
         <div class="actions">
           <el-button
             type="primary"
             size="large"
-            @click="addToCart"
+            :loading="isLoadingModel"
+            @click="handleAddToCart"
           >加入購物車</el-button>
           <el-button size="large">收藏商品</el-button>
         </div>
@@ -45,14 +46,10 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { useCartStore } from '@/stores/cart';
 import { useUserInfoStore } from '@/stores/user';
 import { ElMessage } from 'element-plus';
 
-const cartStore = useCartStore();
-const userStore = useUserInfoStore();
-
-// 定義接口
+// 定義介面
 interface Tag {
   id: number;
   name: string;
@@ -61,57 +58,52 @@ interface Tag {
 interface Product {
   id: number;
   name: string;
-  description: string;
+  description?: string;
   price: number;
   stock: number;
-  is_active: number;
-  category_id: number;
+  is_active?: number;
+  category_id?: number;
   main_image_url: string;
-  tags: Tag[];
+  tags?: Tag[];
 }
 
-const props = defineProps<{
-  visible: boolean;
-  product: Product | null;
-}>();
+const userStore = useUserInfoStore();
 
-const emit = defineEmits<{
-  (e: 'update:visible', visible: boolean): void;
-  (e: 'add-to-cart', product: Product): void;
-}>();
+// 使用 defineModel 雙向綁定，確保類型正確
+const visibleModel = defineModel<boolean>('visible', { default: false });
+const productModel = defineModel<Product | null>('product', { default: null });
+const isLoadingModel = defineModel<boolean>('isLoading', { default: false });
 
-// 使用計算屬性將 props.visible 代理為 visibleValue
-const visibleValue = computed({
-  get: () => props.visible,
-  set: (value) => emit('update:visible', value)
-});
+// 定義事件
+const emit = defineEmits(['addToCart', 'close']);
 
 // 獲取商品圖片 URL
-const getProductImageUrl = computed(() => {
-  if (!props.product?.main_image_url) return "/img/placeholder.png";
-  return `http://127.0.0.1:3007${props.product.main_image_url}`;
+const productImageUrl = computed(() => {
+  if (!productModel.value?.main_image_url) return "/img/placeholder.png";
+  
+  if (productModel.value.main_image_url.startsWith('/')) {
+    return `http://127.0.0.1:3007${productModel.value.main_image_url}`;
+  }
+  
+  return productModel.value.main_image_url;
 });
 
-
 // 處理加入購物車
-const addToCart = () => {
+const handleAddToCart = () => {
+  // 檢查用戶是否已登入
   if (!userStore.isLoggedIn) {
     ElMessage.warning('請先登入後再加入購物車');
     return;
   }
   
-  if (!props.product) return;
+  if (!productModel.value) return;
   
   try {
-    cartStore.addToCart({
-      id: props.product.id,
-      name: props.product.name,
-      price: props.product.price,
-      image_url: props.product.main_image_url
-    }, 1); // 默認添加1個，這裡可以更改為使用數量選擇
-
-    ElMessage.success(`已將 ${props.product.name} 加入購物車`);
-    emit('add-to-cart', props.product);
+    // 發出加入購物車事件
+    emit('addToCart', productModel.value);
+    
+    // 隱藏詳情模態框
+    visibleModel.value = false;
   } catch (error) {
     if (error instanceof Error) {
       ElMessage.error(error.message);

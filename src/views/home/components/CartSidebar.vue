@@ -12,89 +12,101 @@
       </button>
     </div>
     
-    <div v-if="cartStore.items.length > 0" class="cart-content">
-      <div class="cart-items">
-        <div v-for="item in cartStore.items" :key="item.id" class="cart-item">
-          <div class="item-image">
-            <img :src="getProductImageUrl(item.image_url)" :alt="item.name">
-          </div>
-          <div class="item-details">
-            <h3 class="item-name">{{ item.name }}</h3>
-            <div class="item-price">${{ item.price }}</div>
-            <div class="item-quantity">
-              <el-input-number 
-                v-model="item.quantity" 
-                :min="1" 
-                :max="99" 
-                size="small"
-                @change="(val:any) => updateQuantity(item.id, val)"
-              />
+    <div v-if="!cartStore.loading">
+      <div v-if="cartStore.items.length > 0" class="cart-content">
+        <div class="cart-items">
+          <div v-for="item in cartStore.items" :key="item.id" class="cart-item">
+            <div class="item-image">
+              <img :src="getProductImageUrl(item.image_url)" :alt="item.name">
             </div>
+            <div class="item-details">
+              <h3 class="item-name">{{ item.name }}</h3>
+              <div class="item-price">${{ item.price }}</div>
+              <div class="item-quantity">
+                <el-input-number 
+                  v-model="item.quantity" 
+                  :min="1" 
+                  :max="99" 
+                  size="small"
+                  @change="(val:any) => updateQuantity(item.id, val)"
+                />
+              </div>
+            </div>
+            <button class="remove-btn" @click="removeItem(item.id)">
+              <el-icon><Delete /></el-icon>
+            </button>
           </div>
-          <button class="remove-btn" @click="removeItem(item.id)">
-            <el-icon><Delete /></el-icon>
-          </button>
+        </div>
+        
+        <div class="cart-summary">
+          <div class="summary-row">
+            <span>小計:</span>
+            <span>${{ cartStore.totalAmount.toFixed(2) }}</span>
+          </div>
+          <div class="summary-row">
+            <span>運費:</span>
+            <span>免費</span>
+          </div>
+          <div class="summary-row total">
+            <span>總計:</span>
+            <span>${{ cartStore.totalAmount.toFixed(2) }}</span>
+          </div>
+        </div>
+        
+        <div class="cart-actions">
+          <el-button type="primary" class="checkout-btn" @click="checkout">
+            結帳
+          </el-button>
+          <el-button @click="cartStore.clearCart()" :loading="cartStore.loading">
+            清空購物車
+          </el-button>
         </div>
       </div>
       
-      <div class="cart-summary">
-        <div class="summary-row">
-          <span>小計:</span>
-          <span>${{ cartStore.totalAmount.toFixed(2) }}</span>
-        </div>
-        <div class="summary-row">
-          <span>運費:</span>
-          <span>免費</span>
-        </div>
-        <div class="summary-row total">
-          <span>總計:</span>
-          <span>${{ cartStore.totalAmount.toFixed(2) }}</span>
-        </div>
-      </div>
-      
-      <div class="cart-actions">
-        <el-button type="primary" class="checkout-btn" @click="checkout">
-          結帳
-        </el-button>
-        <el-button @click="cartStore.clearCart()">
-          清空購物車
-        </el-button>
+      <div v-else class="empty-cart">
+        <el-empty description="購物車內沒有商品">
+          <template #image>
+            <el-icon class="empty-icon"><ShoppingCart /></el-icon>
+          </template>
+          <el-button @click="closeCart">繼續購物</el-button>
+        </el-empty>
       </div>
     </div>
     
-    <div v-else class="empty-cart">
-      <el-empty description="購物車內沒有商品">
-        <template #image>
-          <el-icon class="empty-icon"><ShoppingCart /></el-icon>
-        </template>
-        <el-button @click="closeCart">繼續購物</el-button>
-      </el-empty>
+    <!-- 載入中狀態 -->
+    <div v-else class="loading-cart">
+      <el-skeleton animated :rows="3" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useCartStore } from '@/stores/cart';
+import { useUserInfoStore } from '@/stores/user';
 import { Delete, Close, ShoppingCart } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
+import { onMounted } from 'vue';
 
-// 接收父組件的props
-const props = defineProps<{
-  visible: boolean;
-}>();
+// 使用 defineModel 進行雙向綁定
+const visible = defineModel<boolean>('visible', { default: false });
 
 // 定義事件
-const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void;
-  (e: 'checkout'): void;
-}>();
+const emit = defineEmits(['checkout']);
 
-// 使用購物車store
+// 使用購物車 store
 const cartStore = useCartStore();
+const userStore = useUserInfoStore();
+
+// 在組件掛載時自動獲取購物車數據
+onMounted(() => {
+  if (userStore.isLoggedIn) {
+    cartStore.fetchCart();
+  }
+});
 
 // 關閉購物車側邊欄
 const closeCart = () => {
-  emit('update:visible', false);
+  visible.value = false;
 };
 
 // 更新商品數量
@@ -116,14 +128,21 @@ const getProductImageUrl = (url: string) => {
 
 // 結帳功能
 const checkout = () => {
-  // 這裡先模擬一個結帳行為，等後端API完成後再對接
-  ElMessage.success('前往結帳頁面');
+  // 檢查用戶是否已登入
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('請先登入後再結帳');
+    return;
+  }
+  
+  // 發出結帳事件
   emit('checkout');
+  // 關閉購物車側邊欄
   closeCart();
 };
 </script>
 
 <style scoped lang="scss">
+/* 樣式保持不變 */
 .cart-sidebar-backdrop {
   position: fixed;
   top: 0;
@@ -296,7 +315,7 @@ const checkout = () => {
     }
   }
   
-  .empty-cart {
+  .empty-cart, .loading-cart {
     flex: 1;
     display: flex;
     align-items: center;
