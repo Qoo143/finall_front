@@ -1,10 +1,10 @@
 // src/stores/cart.ts
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed,watch } from 'vue';
 import { useUserInfoStore } from './user';
 import { ElMessage } from 'element-plus';
-import { 
-  getCart as getCartAPI, 
+import {
+  getCart as getCartAPI,
   addToCart as addToCartAPI,
   updateCartItem as updateCartItemAPI,
   removeFromCart as removeFromCartAPI,
@@ -45,20 +45,20 @@ export const useCartStore = defineStore('cart', () => {
     if (!userStore.isLoggedIn) {
       return;
     }
-  
+
     loading.value = true;
     try {
       console.log('獲取購物車 - 開始請求');
-      
+
       // 直接使用現有 API，但處理不同的響應格式
-      const response:any = await getCartAPI(userStore.token);
+      const response: any = await getCartAPI(userStore.token);
       console.log('獲取購物車 - 響應:', response);
-      
+
       // 調整邏輯：response 已經是 data 本身了
       if (response && response.code === 0) {
         const cartData = response.data;
         console.log('獲取購物車 - 解析的數據:', cartData);
-        
+
         if (cartData && cartData.items && Array.isArray(cartData.items)) {
           items.value = cartData.items;
           console.log('購物車商品數量:', items.value.length);
@@ -88,7 +88,7 @@ export const useCartStore = defineStore('cart', () => {
       name: string,
       price: number,
       image_url: string
-    }, 
+    },
     quantity: number
   ) {
     if (!userStore.isLoggedIn) {
@@ -104,26 +104,26 @@ export const useCartStore = defineStore('cart', () => {
     loading.value = true;
     try {
       console.log('添加購物車 - 開始請求');
-      console.log('添加購物車 - 參數:', { 
-        productId: item.id, 
+      console.log('添加購物車 - 參數:', {
+        productId: item.id,
         quantity,
-        token: userStore.token.substring(0, 20) + '...' 
+        token: userStore.token.substring(0, 20) + '...'
       });
-      
-      const response:any = await addToCartAPI(userStore.token, item.id, quantity);
+
+      const response: any = await addToCartAPI(userStore.token, item.id, quantity);
       console.log('添加購物車 - 響應:', response);
-      
+
       if (response && response.code === 0) {
         ElMessage.success(`已成功加入購物車: ${item.name} x ${quantity}`);
-        
+
         // 重新載入購物車資料
         await fetchCart();
       } else {
         ElMessage.error(response.data?.message || '加入購物車失敗');
       }
-    } catch (error:any) {
+    } catch (error: any) {
       console.error('添加購物車錯誤:', error);
-      
+
       // 顯示詳細錯誤信息
       if (error.response) {
         console.error('錯誤響應:', error.response.data);
@@ -131,7 +131,7 @@ export const useCartStore = defineStore('cart', () => {
       } else {
         ElMessage.error('加入購物車失敗，請稍後再試');
       }
-      
+
       throw error;
     } finally {
       loading.value = false;
@@ -156,10 +156,10 @@ export const useCartStore = defineStore('cart', () => {
     try {
       console.log('更新購物車 - 開始請求');
       console.log('更新購物車 - 參數:', { itemId, quantity });
-      
-      const response:any = await updateCartItemAPI(userStore.token, itemId, quantity);
+
+      const response: any = await updateCartItemAPI(userStore.token, itemId, quantity);
       console.log('更新購物車 - 響應:', response);
-      
+
       if (response && response.code === 0) {
         // 更新本地狀態
         const index = items.value.findIndex(item => item.id === itemId);
@@ -191,15 +191,15 @@ export const useCartStore = defineStore('cart', () => {
     try {
       console.log('移除購物車商品 - 開始請求');
       console.log('移除購物車商品 - 參數:', { itemId });
-      
-      const response:any = await removeFromCartAPI(userStore.token, itemId);
+
+      const response: any = await removeFromCartAPI(userStore.token, itemId);
       console.log('移除購物車商品 - 響應:', response);
-      
+
       if (response && response.code === 0) {
         // 從本地狀態中移除
         const removedItem = items.value.find(item => item.id === itemId);
         items.value = items.value.filter(item => item.id !== itemId);
-        
+
         if (removedItem) {
           ElMessage.success(`已從購物車移除: ${removedItem.name}`);
         } else {
@@ -228,10 +228,10 @@ export const useCartStore = defineStore('cart', () => {
     loading.value = true;
     try {
       console.log('清空購物車 - 開始請求');
-      
-      const response:any = await clearCartAPI(userStore.token);
+
+      const response: any = await clearCartAPI(userStore.token);
       console.log('清空購物車 - 響應:', response);
-      
+
       if (response && response.code === 0) {
         // 清空本地狀態
         items.value = [];
@@ -262,6 +262,20 @@ export const useCartStore = defineStore('cart', () => {
       items.value = [];
     }
   }
+
+  // 監聽登入狀態變化，當登出時清空購物車
+  watch(() => userStore.isLoggedIn, (isLoggedIn) => {
+    if (!isLoggedIn) {
+      // 用戶登出，清空購物車數據
+      items.value = [];
+    }
+  });
+
+  // 顯式清空購物車的方法
+  const resetCart = () => {
+    items.value = [];
+  };
+
 
   return {
     items,

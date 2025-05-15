@@ -65,6 +65,7 @@ const submitOrder = () => {
   margin: 0 auto;
   padding: 80px 20px 40px;
   
+  
   h1 {
     font-size: 32px;
     color: $primary-b-d;

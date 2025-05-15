@@ -11,6 +11,7 @@ export const useUserInfoStore = defineStore('userInfo', () => {
   const userName = ref<string>('QooFromStore');
   const imageUrl = ref<string>('/img/user.jfif');
   const isLoggedIn = ref<boolean>(false);
+  const isAdmin = ref<boolean>(true); // 預設為管理員
 
   // 在初始化時檢查 token 是否有效
   if (token.value) {
@@ -35,7 +36,8 @@ export const useUserInfoStore = defineStore('userInfo', () => {
 
         token.value = userData.token;
         account.value = userData.account;
-        userName.value = userData.username || '未知使用者';
+        isAdmin.value = userData.identity === 1,
+          userName.value = userData.name || '未知使用者';
         imageUrl.value = userData.image_url || '/img/user.jfif';
         isLoggedIn.value = true;
 
@@ -58,9 +60,10 @@ export const useUserInfoStore = defineStore('userInfo', () => {
   const logout = () => {
     token.value = '';
     account.value = '';
+    userName.value = '未知使用者'; // 重置為默認名稱
+    imageUrl.value = '/img/user.jfif';
     isLoggedIn.value = false;
-    localStorage.removeItem('userInfo');
-    localStorage.removeItem('cart');
+    isAdmin.value = false; // 重置管理員權限
   };
 
   // 檢查 token 是否即將過期（例如還有 5 分鐘過期）
@@ -82,6 +85,7 @@ export const useUserInfoStore = defineStore('userInfo', () => {
     userName,
     imageUrl,
     isLoggedIn,
+    isAdmin,
     userLogin,
     logout,
     isTokenAboutToExpire

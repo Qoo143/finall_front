@@ -4,17 +4,20 @@
       <img src="../../../../img/QIANTA-d-b.svg" alt="logo" />
     </div>
     <div class="user">
-      <button v-if="isLogin" class="userInfoIsLogin">
-        {{ userName }}
+      <!-- 已登入狀態 - 顯示用戶名稱 -->
+      <button v-if="isLoggedIn" class="userInfoIsLogin">
+        {{ userStore.userName }}
       </button>
-
+      
+      <!-- 未登入狀態 - 顯示登入按鈕 -->
       <button @click="goLogin" v-else class="userInfoNoLogin">
         <el-icon class="user-icon" :size="24"><UserFilled /></el-icon>
         {{ "前往登入" }}
       </button>
-
-      <button v-if="isAdmin" class="switch" @click="goTo">
-        {{ isHome ? "前往後台" : "前往前台" }}
+      
+      <!-- 後台頁面時顯示"前往前台"按鈕 -->
+      <button v-if="isAdmin && !isHome" class="switch" @click="goToHome">
+        前往前台
       </button>
     </div>
   </div>
@@ -22,39 +25,61 @@
 
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
-import { computed, ref } from "vue";
-import { useUserInfoStore } from "@/stores/user"; //pinia獲取資訊
-import { storeToRefs } from "pinia";
-/**
- * 使用pinia
- */
-const UserInfo = useUserInfoStore();
-const { userName, imageUrl } = storeToRefs(UserInfo); //保持解構出來還是響應式
-/**
- * 判斷狀態
- */
-const isLogin = ref(false); //先假設登入
-const isAdmin = ref(true); //先假設是管理員
-const isHome = computed(() => route.path.startsWith("/home")); // 判斷是否在前台
+import { computed, onMounted } from "vue";
+import { useUserInfoStore } from "@/stores/user"; // Pinia 用戶信息
+import { UserFilled } from "@element-plus/icons-vue"; // 引入 Element Plus 圖標
+import { ElMessage } from "element-plus"; // 引入提示信息組件
 
-const router = useRouter(); // 切換頁面用
-const route = useRoute(); // 判斷當前頁面用
+// 初始化路由和 Store
+const router = useRouter();
+const route = useRoute();
+const userStore = useUserInfoStore();
+
+// 判斷登入狀態 - 使用 Pinia 存儲的登入狀態
+const isLoggedIn = computed(() => userStore.isLoggedIn);
+
+// 判斷是否為管理員 - 這個可以根據實際需求從用戶數據中獲取
+const isAdmin = computed(() => userStore.isAdmin || true); // 應該從 userStore 獲取正確的管理員權限
+
+// 判斷是否在前台頁面
+const isHome = computed(() => route.path.startsWith("/home"));
 
 /**
- * 前往登入
+ * 頁面載入時檢查登入狀態
+ */
+onMounted(() => {
+  // 檢查是否有需要登入權限的路由
+  checkAuthRequirement();
+});
+
+/**
+ * 檢查當前路由是否需要登入權限
+ */
+const checkAuthRequirement = () => {
+  // 檢查當前路由是否需要登入權限
+  const requiresAuth = route.meta.requiresAuth;
+  
+  // 如果路由需要登入且用戶未登入，則導航到登入頁面
+  if (requiresAuth && !isLoggedIn.value) {
+    ElMessage.warning("請先登入後再訪問此頁面");
+    // 保存當前路徑，登入後可以返回
+    router.push({ path: '/login', query: { redirect: route.fullPath } });
+  }
+};
+
+/**
+ * 前往登入頁面
  */
 const goLogin = () => {
-  router.push("/login");
+  // 保存當前路徑，登入後可以返回
+  router.push({ path: '/login', query: { redirect: route.fullPath } });
 };
+
 /**
- * 切換前台/後台
+ * 從後台前往前台
  */
-const goTo = () => {
-  if (isHome.value) {
-    router.push("/products");
-  } else {
-    router.push("/home");
-  }
+const goToHome = () => {
+  router.push("/home");
 };
 </script>
 

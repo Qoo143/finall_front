@@ -6,11 +6,12 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from "vue";
-import { useCartStore } from "@/stores/cart";
-import { useUserInfoStore } from "@/stores/user";
-import { tokenManager } from "@/utils/tokenManager";
-import { ElMessage } from "element-plus";
+import { onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
+import { useUserInfoStore } from '@/stores/user';
+import { useCartStore } from '@/stores/cart';
+import { tokenManager } from '@/utils/tokenManager';
 
 const cartStore = useCartStore();
 const userStore = useUserInfoStore();
@@ -37,5 +38,6 @@ onMounted(async () => {
 .page {
   height: 100vh;
   width: 100%;
+  
 }
 </style>

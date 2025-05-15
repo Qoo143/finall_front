@@ -124,7 +124,7 @@ const handleLogin = async () => {
 
         ElMessage.success("登入成功！");
 
-        router.push({ name: "products" });
+        router.push({ name: "Home" });
       } catch (error: any) {
         console.error("登入錯誤:", error);
         ElMessage.error(error.message || "登入失敗，請檢查帳號密碼");

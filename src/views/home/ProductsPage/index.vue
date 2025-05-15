@@ -85,19 +85,6 @@
       <div class="products-main">
         <div class="page-header">
           <h1>商品瀏覽</h1>
-          <div class="sort-container">
-            <span class="sort-label">排序方式 : </span>
-            <el-select
-              v-model="sortValue"
-              placeholder="排序"
-              size="small"
-              class="sort-select"
-            >
-              <el-option label="最新上架" value="newest" />
-              <el-option label="價格由低到高" value="price_asc" />
-              <el-option label="價格由高到低" value="price_desc" />
-            </el-select>
-          </div>
         </div>
 
         <!-- 商品網格 -->
@@ -197,7 +184,6 @@ const catValue = ref("");
 const tagValue = ref<string[]>([]);
 const startDate = ref("");
 const endDate = ref("");
-const sortValue = ref("newest");
 
 // 分頁相關
 const currentPage = ref(1);
@@ -259,11 +245,6 @@ const fetchProducts = async () => {
     // 處理商品名稱
     if (nameValue.value.trim()) {
       params["name"] = nameValue.value.trim();
-    }
-
-    // 處理排序
-    if (sortValue.value) {
-      params["sort"] = sortValue.value;
     }
 
     // 發送請求
@@ -355,7 +336,6 @@ const handleReset = () => {
   catValue.value = "";
   tagValue.value = [];
   nameValue.value = "";
-  sortValue.value = "newest";
   currentPage.value = 1;
   fetchProducts();
 };
@@ -373,13 +353,13 @@ const openProductDetail = (product: Product) => {
  */
 const openQuantitySelector = (product: Product) => {
   if (!userStore.isLoggedIn) {
-    ElMessage.warning('請先登入後再加入購物車');
+    ElMessage.warning("請先登入後再加入購物車");
     return;
   }
-  
+
   selectedCartProduct.value = product;
   quantityDialogVisible.value = true;
-  
+
   // 如果商品詳情彈窗正在顯示，則關閉它
   if (detailDialogVisible.value) {
     detailDialogVisible.value = false;
@@ -391,22 +371,27 @@ const openQuantitySelector = (product: Product) => {
  */
 const addToCart = async (quantity: number) => {
   if (!selectedCartProduct.value) return;
-  
+
   try {
     isLoading.value = true;
-    
+
     // 使用購物車 Store 添加商品
-    await cartStore.addToCart({
-      id: selectedCartProduct.value.id,
-      name: selectedCartProduct.value.name,
-      price: selectedCartProduct.value.price,
-      image_url: selectedCartProduct.value.main_image_url
-    }, quantity);
-    
-    ElMessage.success(`已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`);
+    await cartStore.addToCart(
+      {
+        id: selectedCartProduct.value.id,
+        name: selectedCartProduct.value.name,
+        price: selectedCartProduct.value.price,
+        image_url: selectedCartProduct.value.main_image_url,
+      },
+      quantity
+    );
+
+    ElMessage.success(
+      `已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`
+    );
   } catch (error) {
-    console.error('加入購物車失敗:', error);
-    ElMessage.error('加入購物車失敗，請稍後再試');
+    console.error("加入購物車失敗:", error);
+    ElMessage.error("加入購物車失敗，請稍後再試");
   } finally {
     isLoading.value = false;
     quantityDialogVisible.value = false;
@@ -423,7 +408,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .wrapper {
   width: 100%;
-  min-height: 100vh;
+  height: 100%;
   background-color: #f9f9f9;
 }
 
@@ -431,8 +416,9 @@ onMounted(() => {
   display: flex;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 8vh 0px 40px;
+  padding: 8vh 0px 0px 0px;
   gap: 30px;
+  background-color: #f9f9f9;
 }
 
 /* 左側篩選欄 */
@@ -446,7 +432,6 @@ onMounted(() => {
   align-self: flex-start;
   position: sticky;
   top: 80px;
-  height: 80vh;
 
   .sidebar-section {
     margin-bottom: 24px;
@@ -517,6 +502,9 @@ onMounted(() => {
 .products-main {
   flex: 1;
   min-width: 0;
+  //添加該區域之滾動軸
+  max-height: calc(100vh - 8vh); // 設定最大高度
+  overflow-y: auto;
 
   .page-header {
     display: flex;
@@ -531,26 +519,6 @@ onMounted(() => {
       color: $primary-b-d;
       margin-right: 20px;
       white-space: nowrap;
-    }
-
-    .sort-container {
-      display: flex;
-      align-items: center;
-      justify-content: end;
-      gap: 10px;
-      min-width: 280px;
-      white-space: nowrap;
-
-      .sort-label {
-        color: $text-d;
-        font-size: 14px;
-        flex-shrink: 0;
-      }
-
-      .sort-select {
-        min-width: 140px;
-        width: auto;
-      }
     }
   }
 
@@ -638,6 +606,9 @@ onMounted(() => {
 
 /* 媒體查詢適配 */
 @media (max-width: 768px) {
+  .filter-sidebar {
+    width: 200px;
+  }
   .products-main .page-header {
     flex-direction: column;
     align-items: flex-start;

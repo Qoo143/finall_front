@@ -8,17 +8,17 @@ const router = createRouter({
     //預設轉向
     {
       path: "/",
-      redirect: "/products",
+      redirect: "/home",
     },
     //1.登入註冊
     {
       path: "/login",
-      component: () => import("@/views/login/index.vue"), // 包含 tab 切換邏輯
+      component: () => import("@/views/login/index.vue"), 
       children: [
         {
           path: "",
           name: "Login",
-          component: () => import("@/views/login/components/LoginForm.vue"), // 登入表單
+          component: () => import("@/views/login/components/LoginForm.vue"), // 登入表單  
         },
         {
           path: "/register",
@@ -32,6 +32,7 @@ const router = createRouter({
       path: "/products",
       name: "products",
       component: () => import("@/views/products/index.vue"),
+      meta: { requiresAuth: true, requiresAdmin: true }, // '登入'與'管理員'權限檢查
       children: [
         {
           //商品列表
@@ -90,26 +91,13 @@ const router = createRouter({
           path: "/ProductsPage",
           name: "ProductsPage",
           component: () => import("@/views/home/ProductsPage/index.vue"),
-          children: [
-            //3.2.1選擇商品
-            // {
-            //   path: "",
-            //   name: "HomePage",
-            //   component: () => import("@/views/home/HomePage/index.vue"),
-            // },
-            //3.2.2確認商品
-            // {
-            //   path: "",
-            //   name: "ProductsPage",
-            //   component: () => import("@/views/home/HomePage/index.vue"),
-            // }
-          ],
         },
         //3.3訂單頁面
         {
-          path: "",
+          path: "/OrderListPage",
           name: "OrderListPage",
           component: () => import("@/views/home/OrderListPage/index.vue"),
+            meta: { requiresAuth: true } // 需要登入才能訪問
         },
         //3.4結帳頁面
         {
@@ -127,14 +115,30 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const userStore = useUserInfoStore();
   
-  // 檢查路由是否需要身份驗證
+  // 1. 檢查路由是否需要登入身份
   if (to.meta.requiresAuth && !userStore.isLoggedIn) {
-    // 未登入，跳轉到登入頁面
-    next({ path: '/login', query: { redirect: to.fullPath } });
-  } else {
-    // 已登入或不需要身份驗證，繼續訪問
-    next();
+    // 未登入，跳轉到登入頁面，並保存原目標路徑
+    next({ 
+      path: '/login', 
+      query: { redirect: to.fullPath } 
+    });
+    return;
   }
+  
+  // 2. 檢查路由是否需要管理員權限
+  if (to.meta.requiresAdmin && !userStore.isAdmin) {
+    // 已登入但不是管理員，返回首頁並提示
+    console.warn("用戶不具備管理員權限，無法訪問該頁面");
+    next({ path: '/home' });
+    // 這裡配合 Element Plus 顯示一個提示訊息
+    // 但由於 router 不能直接訪問組件方法，可能需要通過 localStorage 或其他方式傳遞訊息
+    
+    return;
+  }
+  
+  // 其他情況正常訪問
+  next();
 });
+
 
 export default router;
