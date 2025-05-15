@@ -22,7 +22,7 @@ export interface CartItem {
 }
 
 export const useCartStore = defineStore('cart', () => {
-  const userStore = useUserInfoStore();
+  const userStore = useUserInfoStore();//先抓用戶資料
 
   // 購物車商品列表
   const items = ref<CartItem[]>([]);

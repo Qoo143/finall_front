@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { login } from '@/api/login';
 import { useRouter } from 'vue-router';
+import { tokenManager } from '@/utils/tokenManager';
 const router = useRouter()
 
 export const useUserInfoStore = defineStore('userInfo', () => {
@@ -9,7 +10,19 @@ export const useUserInfoStore = defineStore('userInfo', () => {
   const account = ref<string>(localStorage.getItem('account') || '');
   const userName = ref<string>('QooFromStore');
   const imageUrl = ref<string>('/img/user.jfif');
-  const isLoggedIn = ref<boolean>(!!token.value);
+  const isLoggedIn = ref<boolean>(false);
+
+  // 在初始化時檢查 token 是否有效
+  if (token.value) {
+    isLoggedIn.value = !tokenManager.isTokenExpired(token.value);
+
+    // 如果 token 已過期，自動清除
+    if (!isLoggedIn.value) {
+      token.value = '';
+      localStorage.removeItem('token');
+      localStorage.removeItem('account');
+    }
+  }
 
   // ✅ 登入方法
   const userLogin = async (loginData: { account: string; password: string }) => {
@@ -26,8 +39,8 @@ export const useUserInfoStore = defineStore('userInfo', () => {
         imageUrl.value = userData.image_url || '/img/user.jfif';
         isLoggedIn.value = true;
 
-        localStorage.setItem('token', token.value);
-        localStorage.setItem('account', account.value);
+        // localStorage.setItem('token', token.value);
+        // localStorage.setItem('account', account.value);
 
         // 確保路由切換完成
         window.location.href = '/products';
@@ -46,8 +59,20 @@ export const useUserInfoStore = defineStore('userInfo', () => {
     token.value = '';
     account.value = '';
     isLoggedIn.value = false;
-    localStorage.removeItem('token');
-    localStorage.removeItem('account');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('cart');
+  };
+
+  // 檢查 token 是否即將過期（例如還有 5 分鐘過期）
+  const isTokenAboutToExpire = () => {
+    if (!token.value) return false;
+
+    const expirationTime = tokenManager.getTokenExpirationTime(token.value);
+    if (!expirationTime) return false;
+
+    // 檢查是否在 5 分鐘內過期
+    const fiveMinutesFromNow = Date.now() + 5 * 60 * 1000;
+    return expirationTime < fiveMinutesFromNow;
   };
 
   // ✅ 一定要 return
@@ -59,6 +84,7 @@ export const useUserInfoStore = defineStore('userInfo', () => {
     isLoggedIn,
     userLogin,
     logout,
+    isTokenAboutToExpire
   };
 }, {
   persist: true
