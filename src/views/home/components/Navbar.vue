@@ -289,7 +289,7 @@ const goToAdmin = () => {
         position: absolute;
         top: calc(100% + 5px);
         right: 0;
-        width: 150px;
+        width: 127px;
         background-color: white;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -324,6 +324,9 @@ const goToAdmin = () => {
       background-color: $primary-y;
       color: $text-d;
       font-weight: 500;
+      &:hover {
+        background-color: $primary-y-l;
+      }
     }
   }
 
@@ -371,7 +374,7 @@ const goToAdmin = () => {
       color: $text-d;
 
       &:hover {
-        background-color: darken($primary-y, 80%);
+        background-color: $primary-y-l;
       }
     }
 
@@ -395,6 +398,10 @@ const goToAdmin = () => {
           &:hover {
             background-color: #f5f5f5;
           }
+          &.logout-item {
+              color: #f56c6c;
+              border-top: 1px solid #f0f0f0;
+            }
         }
       }
     }

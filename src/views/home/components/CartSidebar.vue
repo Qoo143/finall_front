@@ -12,7 +12,7 @@
       </button>
     </div>
     
-    <div v-if="!cartStore.loading">
+    <div v-if="!cartStore.loading" class="cart-wrapper">
       <div v-if="cartStore.items.length > 0" class="cart-content">
         <div class="cart-items">
           <div v-for="item in cartStore.items" :key="item.id" class="cart-item">
@@ -57,7 +57,7 @@
           <el-button type="primary" class="checkout-btn" @click="checkout">
             結帳
           </el-button>
-          <el-button @click="cartStore.clearCart()" :loading="cartStore.loading">
+          <el-button class="clear-btn" @click="cartStore.clearCart()" :loading="cartStore.loading">
             清空購物車
           </el-button>
         </div>
@@ -164,7 +164,6 @@ const checkout = () => {
 </script>
 
 <style scoped lang="scss">
-/* 樣式保持不變 */
 .cart-sidebar-backdrop {
   position: fixed;
   top: 0;
@@ -206,6 +205,7 @@ const checkout = () => {
     align-items: center;
     padding: 20px;
     border-bottom: 1px solid #f0f0f0;
+    flex-shrink: 0; /* 防止頭部縮小 */
     
     h2 {
       margin: 0;
@@ -226,16 +226,24 @@ const checkout = () => {
     }
   }
   
-  .cart-content {
+  /* 新增一個包裝層 */
+  .cart-wrapper {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden; /* 重要：這限制了整體高度 */
+    height: calc(100% - 60px); /* 扣除頭部高度 */
+  }
+  
+  .cart-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
   
   .cart-items {
     flex: 1;
-    overflow-y: auto;
+    overflow-y: auto; /* 只讓商品列表滾動 */
     padding: 20px;
     
     .cart-item {
@@ -301,6 +309,8 @@ const checkout = () => {
   .cart-summary {
     padding: 20px;
     background-color: #f9f9f9;
+    color: $primary-b;
+    flex-shrink: 0; /* 防止縮小 */
     
     .summary-row {
       display: flex;
@@ -321,6 +331,7 @@ const checkout = () => {
     padding: 20px;
     display: flex;
     gap: 10px;
+    flex-shrink: 0; /* 防止縮小 */
     
     .checkout-btn {
       flex: 2;
@@ -330,6 +341,9 @@ const checkout = () => {
       &:hover {
         background-color: $primary-b;
       }
+    }
+    .clear-btn{
+      height: 45px;
     }
     
     .el-button {

@@ -150,7 +150,7 @@ const handleImageError = () => {
     // 標籤重疊在圖片上
     .product-tags {
       position: absolute;
-      top: 8px;
+      bottom: 8px;
       left: 8px;
       display: flex;
       flex-wrap: wrap;
@@ -181,8 +181,8 @@ const handleImageError = () => {
       overflow: hidden;
       text-overflow: ellipsis;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
+      -webkit-line-clamp: 1;//顯示一行超過就"..."
+      line-clamp: 1;//顯示一行超過就"..."
       -webkit-box-orient: vertical;
       line-height: 1.3;
     }
