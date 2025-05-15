@@ -89,6 +89,7 @@ const productImageUrl = computed(() => {
 });
 
 // 處理加入購物車
+// 處理加入購物車
 const handleAddToCart = () => {
   // 檢查用戶是否已登入
   if (!userStore.isLoggedIn) {
@@ -99,11 +100,11 @@ const handleAddToCart = () => {
   if (!productModel.value) return;
   
   try {
-    // 發出加入購物車事件
+    // 發出加入購物車事件，傳遞完整商品信息，包括庫存
     emit('addToCart', productModel.value);
     
-    // 隱藏詳情模態框
-    visibleModel.value = false;
+    // 注意：不要在這裡立即關閉模態框，應該在確認添加成功後再關閉
+    // 所以我們移除了 visibleModel.value = false; 這一行
   } catch (error) {
     if (error instanceof Error) {
       ElMessage.error(error.message);

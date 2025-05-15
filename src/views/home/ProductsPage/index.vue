@@ -375,29 +375,29 @@ const addToCart = async (quantity: number) => {
   try {
     isLoading.value = true;
 
-    // 使用購物車 Store 添加商品
-    await cartStore.addToCart(
+    // 將商品的庫存信息一併傳入
+    const result:any = await cartStore.addToCart(
       {
         id: selectedCartProduct.value.id,
         name: selectedCartProduct.value.name,
         price: selectedCartProduct.value.price,
         image_url: selectedCartProduct.value.main_image_url,
+        stock: selectedCartProduct.value.stock // 添加庫存信息
       },
       quantity
     );
 
-    ElMessage.success(
-      `已將 ${quantity} 件 ${selectedCartProduct.value.name} 加入購物車`
-    );
+    // 只有在成功加入購物車時才關閉對話框
+    if (result) {
+      quantityDialogVisible.value = false;
+    }
   } catch (error) {
     console.error("加入購物車失敗:", error);
     ElMessage.error("加入購物車失敗，請稍後再試");
   } finally {
     isLoading.value = false;
-    quantityDialogVisible.value = false;
   }
 };
-
 // 初始載入
 onMounted(() => {
   fetchCategories();

@@ -73,7 +73,7 @@ const handleAddToCart = () => {
     return;
   }
   
-  // 發出事件到父組件處理
+  // 發出事件到父組件處理，確保傳遞完整商品信息，包括庫存
   emit('addToCart', product.value);
 };
 

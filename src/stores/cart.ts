@@ -1,6 +1,6 @@
 // src/stores/cart.ts
 import { defineStore } from 'pinia';
-import { ref, computed,watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useUserInfoStore } from './user';
 import { ElMessage } from 'element-plus';
 import {
@@ -80,14 +80,15 @@ export const useCartStore = defineStore('cart', () => {
   }
 
   /**
-   * 加入購物車
-   */
+  *加入購物車
+  */
   async function addToCart(
     item: {
       id: number,
       name: string,
       price: number,
-      image_url: string
+      image_url: string,
+      stock: number
     },
     quantity: number
   ) {
@@ -98,6 +99,16 @@ export const useCartStore = defineStore('cart', () => {
 
     if (quantity <= 0) {
       ElMessage.warning('商品數量必須大於 0');
+      return;
+    }
+
+    // 檢查購物車中是否已有該商品
+    const existingItem = items.value.find(cartItem => cartItem.productId === item.id);
+    const existingQuantity = existingItem ? existingItem.quantity : 0;
+
+    // 檢查添加後的總數是否超過庫存
+    if (existingQuantity + quantity > item.stock) {
+      ElMessage.warning(`抱歉，您的購物車中已有${existingQuantity}台，加上的數量將超過庫存上限`);
       return;
     }
 
