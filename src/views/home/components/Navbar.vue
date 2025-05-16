@@ -9,10 +9,9 @@
     >
       <!-- 左側選單 -->
       <nav class="navbar__left">
-        <button @click="onClickMenu">選單</button>
         <button @click="goto('home')">首頁</button>
         <button @click="goto('ProductsPage')">商品</button>
-        <button>訂單</button>
+        <button @click="goto('OrderListPage')">訂單</button>
         <button>關於</button>
       </nav>
 
@@ -145,15 +144,13 @@ onBeforeUnmount(() => {
   document.removeEventListener("click", closeDropdownOnClickOutside);
 });
 
-function onClickMenu() {
-  alert("選單被點了！");
-}
-
 //判斷所在頁面變換class
 // 判斷是否在商品頁面
 const isWhitePage = computed(() => {
   return (
-    route.path.includes("/ProductsPage") || route.path.includes("/checkout")
+    route.path.includes("/ProductsPage") ||
+    route.path.includes("/checkout") ||
+    route.path.includes("/OrderListPage")
   );
 });
 
@@ -354,21 +351,12 @@ const goToAdmin = () => {
   button {
     color: black;
     border-radius: 0.5rem;
-    background-color: #e7e7e7;
 
     &:hover {
       background-color: $primary-b-ll;
     }
   }
   .navbar__right {
-    button {
-      background-color: transparent;
-
-      &:hover {
-        background-color: $primary-b-ll;
-      }
-    }
-
     .admin-button {
       background-color: $primary-y;
       color: $text-d;
@@ -399,9 +387,9 @@ const goToAdmin = () => {
             background-color: #f5f5f5;
           }
           &.logout-item {
-              color: #f56c6c;
-              border-top: 1px solid #f0f0f0;
-            }
+            color: #f56c6c;
+            border-top: 1px solid #f0f0f0;
+          }
         }
       }
     }

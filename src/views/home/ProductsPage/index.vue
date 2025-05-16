@@ -376,13 +376,13 @@ const addToCart = async (quantity: number) => {
     isLoading.value = true;
 
     // 將商品的庫存信息一併傳入
-    const result:any = await cartStore.addToCart(
+    const result: any = await cartStore.addToCart(
       {
         id: selectedCartProduct.value.id,
         name: selectedCartProduct.value.name,
         price: selectedCartProduct.value.price,
         image_url: selectedCartProduct.value.main_image_url,
-        stock: selectedCartProduct.value.stock // 添加庫存信息
+        stock: selectedCartProduct.value.stock, // 添加庫存信息
       },
       quantity
     );
@@ -414,10 +414,10 @@ onMounted(() => {
 
 .products-container {
   display: flex;
-  max-width: 1400px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 8vh 0px 0px 0px;
-  gap: 30px;
+  padding: 8vh 0px 0px 16px;
+  gap: 2rem;
   background-color: #f9f9f9;
 }
 
@@ -502,6 +502,7 @@ onMounted(() => {
 .products-main {
   flex: 1;
   min-width: 0;
+  padding-right: 1rem;
   //添加該區域之滾動軸
   max-height: calc(100vh - 8vh); // 設定最大高度
   overflow-y: auto;
