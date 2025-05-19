@@ -40,6 +40,24 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import "@google/model-viewer";
+import { getModelUrl } from "@/utils/urlHelpers";
+
+// 計算預覽URL
+const previewUrl = computed(() => {
+  // 如果有上傳新文件，優先使用新文件預覽
+  if (productData.value?.model_file) {
+    return URL.createObjectURL(productData.value.model_file);
+  }
+
+  // 否則使用已有的URL
+  if (productData.value?.model_url) {
+    return getModelUrl(productData.value.model_url);
+  }
+
+  return "";
+});
+
+
 
 // 綁定到父組件的值
 const productData = defineModel<{
@@ -52,26 +70,6 @@ const hasModel = computed(() => {
   return !!(productData.value?.model_url || productData.value?.model_file);
 });
 
-// 計算預覽URL
-const previewUrl = computed(() => {
-  // 如果有上傳新文件，優先使用新文件預覽
-  if (productData.value?.model_file) {
-    console.log("文件", productData.value.model_file);
-
-    return URL.createObjectURL(productData.value.model_file);
-  }
-
-  // 否則使用已有的URL
-  if (productData.value?.model_url) {
-    // 如果是相對路徑，添加基礎URL
-    if (productData.value.model_url.startsWith("/")) {
-      return `http://localhost:3007${productData.value.model_url}`;
-    }
-    return productData.value.model_url;
-  }
-
-  return "";
-});
 watch(previewUrl, (val) => {
   console.log("即將渲染的預覽網址：", val);
 });

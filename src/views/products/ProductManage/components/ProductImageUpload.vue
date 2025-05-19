@@ -35,6 +35,22 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import type { ImageData } from "@/types/productApiResponse"; //圖片格式
+import { getImageUrl } from "@/utils/urlHelpers";
+
+// 預覽圖片方法
+const getPreviewUrl = (file: string | File): string => {
+  // 如果是File對象，使用createObjectURL
+  if (file instanceof File) return URL.createObjectURL(file);
+
+  // 如果是字符串URL
+  if (typeof file === "string") {
+    return getImageUrl(file);
+  }
+
+  // 預設情況
+  return "";
+};
+
 
 const images = defineModel<ImageData[]>("images", { required: true });
 const deletedIds = defineModel<number[]>("deletedIds", { required: true });
@@ -91,26 +107,6 @@ const setAsMain = (index: number) => {
   });
 };
 
-/**
- * 預覽圖片(圖源可能為後端url，也可能為前端用戶上傳)
- */
-const getPreviewUrl = (file: string | File): string => {
-  console.log("處理圖片URL:", file);
-
-  // 如果是File對象，使用createObjectURL
-  if (file instanceof File) return URL.createObjectURL(file);
-
-  // 如果是字符串URL(後端需給完整url)
-  if (typeof file === "string") {
-    // 檢查是否為完整 URL
-    if (file.startsWith("http")) return file;
-    // 如果是相對路徑，添加基礎 URL
-    return `http://localhost:3007${file}`;
-  }
-
-  // 預設情況
-  return "";
-};
 //----------<<滾動邏輯>>----------
 const scrollWrapper = ref<HTMLElement | null>(null);
 /**
