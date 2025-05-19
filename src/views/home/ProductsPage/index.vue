@@ -340,12 +340,26 @@ const handleReset = () => {
   fetchProducts();
 };
 
-/**
- * 開啟商品詳情彈窗
- */
-const openProductDetail = (product: Product) => {
-  selectedProduct.value = product;
-  detailDialogVisible.value = true;
+// 開啟商品詳情彈窗並獲取完整商品信息
+const openProductDetail = async (product: Product) => {
+  try {
+    selectedProduct.value = product; // 先設置基本信息
+    detailDialogVisible.value = true; // 顯示對話框
+    isLoading.value = true; // 設置加載狀態
+    
+    // 請求詳細商品信息
+    const { data } = await axios.get(`http://127.0.0.1:3007/products/${product.id}`);
+    
+    if (data && data.code === 0) {
+      // 成功獲取完整信息後更新選中商品
+      selectedProduct.value = data.data;
+    }
+  } catch (error) {
+    console.error("獲取商品詳情失敗", error);
+    ElMessage.error("獲取商品詳情失敗，請稍後再試");
+  } finally {
+    isLoading.value = false;
+  }
 };
 
 /**

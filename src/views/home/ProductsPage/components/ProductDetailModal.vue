@@ -8,21 +8,76 @@
   >
     <div v-if="productModel" class="product-detail">
       <div class="detail-image">
-        <img
-          :src="productImageUrl"
-          :alt="productModel.name"
-        />
+        <!-- 圖片/模型顯示區域 -->
+        <div class="image-container">
+          <!-- 圖片/模型切換按鈕 -->
+          <div class="view-toggle">
+            <el-button-group>
+              <el-button
+                :type="viewMode === 'image' ? 'primary' : ''"
+                @click="viewMode = 'image'"
+                size="small"
+              >
+                <el-icon><Picture /></el-icon>
+              </el-button>
+              <el-button
+                :type="viewMode === 'model' ? 'primary' : ''"
+                @click="viewMode = 'model'"
+                size="small"
+                :disabled="!hasModel"
+              >
+                <el-icon><Coin /></el-icon>
+              </el-button>
+            </el-button-group>
+          </div>
+
+          <!-- 圖片顯示 -->
+          <div v-if="viewMode === 'image'" class="image-view">
+            <img
+              :src="currentImageUrl"
+              :alt="productModel.name"
+              class="main-image"
+            />
+          </div>
+
+          <!-- 3D模型顯示 -->
+          <div v-else-if="viewMode === 'model' && modelUrl" class="model-view">
+            <model-viewer
+              :src="modelUrl"
+              alt="3D模型預覽"
+              auto-rotate
+              camera-controls
+              shadow-intensity="1"
+              style="width: 100%; height: 100%"
+            ></model-viewer>
+          </div>
+        </div>
+
+        <!-- 縮略圖區域 - 無論在模型還是圖片模式下都可以點擊 -->
+        <div v-if="productImages.length > 1" class="image-thumbnails">
+          <div
+            v-for="(image, index) in productImages"
+            :key="index"
+            :class="[
+              'thumbnail',
+              { active: currentImageIndex === index && viewMode === 'image' },
+            ]"
+            @click="handleThumbnailClick(index)"
+          >
+            <img
+              :src="getThumbnailUrl(image.file)"
+              :alt="`縮略圖 ${index + 1}`"
+            />
+          </div>
+        </div>
       </div>
+
       <div class="detail-info">
         <h2>{{ productModel.name }}</h2>
         <div class="price">${{ productModel.price }}</div>
         <div class="stock">庫存: {{ productModel.stock }}</div>
         <div class="tags">
-          <span
-            v-for="tag in productModel.tags"
-            :key="tag.id"
-            class="tag"
-          >
+          <span v-for="tag in productModel.tags" :key="tag.id" class="tag">
             {{ tag.name }}
           </span>
         </div>
@@ -36,7 +91,8 @@
             size="large"
             :loading="isLoadingModel"
             @click="handleAddToCart"
-          >加入購物車</el-button>
+            >加入購物車</el-button
+          >
           <el-button size="large">收藏商品</el-button>
         </div>
       </div>
@@ -45,14 +101,22 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { useUserInfoStore } from '@/stores/user';
-import { ElMessage } from 'element-plus';
+import { computed, ref, watch } from "vue";
+import { useUserInfoStore } from "@/stores/user";
+import { ElMessage } from "element-plus";
+import { Picture, Coin } from "@element-plus/icons-vue";
+import "@google/model-viewer";
 
 // 定義介面
 interface Tag {
   id: number;
   name: string;
+}
+
+interface ProductImage {
+  id: number;
+  file: string;
+  is_main: number;
 }
 
 interface Product {
@@ -65,31 +129,105 @@ interface Product {
   category_id?: number;
   main_image_url: string;
   tags?: Tag[];
+  images?: ProductImage[];
+  model_url?: string;
 }
 
 const userStore = useUserInfoStore();
 
 // 使用 defineModel 雙向綁定，確保類型正確
-const visibleModel = defineModel<boolean>('visible', { default: false });
-const productModel = defineModel<Product | null>('product', { default: null });
-const isLoadingModel = defineModel<boolean>('isLoading', { default: false });
+const visibleModel = defineModel<boolean>("visible", { default: false });
+const productModel = defineModel<Product | null>("product", { default: null });
+const isLoadingModel = defineModel<boolean>("isLoading", { default: false });
 
-// 定義事件
-const emit = defineEmits(['addToCart', 'close']);
+// 商品圖片相關狀態
+const productImages = ref<ProductImage[]>([]);
+const currentImageIndex = ref(0);
+const viewMode = ref<"image" | "model">("image");
 
-// 獲取商品圖片 URL
-const productImageUrl = computed(() => {
-  if (!productModel.value?.main_image_url) return "/img/placeholder.png";
-  
-  if (productModel.value.main_image_url.startsWith('/')) {
-    return `http://127.0.0.1:3007${productModel.value.main_image_url}`;
-  }
-  
-  return productModel.value.main_image_url;
+// 監聽產品變化，更新圖片和索引
+watch(
+  () => productModel.value,
+  (newProduct) => {
+    if (newProduct && newProduct.images && newProduct.images.length > 0) {
+      productImages.value = newProduct.images;
+
+      // 找到主圖的索引並設為當前顯示圖片
+      const mainImageIndex = newProduct.images.findIndex(
+        (img) => img.is_main === 1
+      );
+      currentImageIndex.value = mainImageIndex >= 0 ? mainImageIndex : 0;
+    } else if (newProduct) {
+      // 如果沒有圖片陣列但有主圖，創建一個只包含主圖的圖片陣列
+      productImages.value = [
+        {
+          id: 0,
+          file: newProduct.main_image_url,
+          is_main: 1,
+        },
+      ];
+      currentImageIndex.value = 0;
+    } else {
+      productImages.value = [];
+      currentImageIndex.value = 0;
+    }
+
+    // 重置視圖模式為圖片
+    viewMode.value = "image";
+  },
+  { immediate: true }
+);
+
+// 當前顯示的圖片URL
+const currentImageUrl = computed(() => {
+  if (productImages.value.length === 0) return "/img/placeholder.png";
+  return getImageUrl(productImages.value[currentImageIndex.value].file);
 });
 
-// 處理加入購物車
-// 處理加入購物車
+// 判斷是否有模型可顯示
+const hasModel = computed(() => {
+  return !!productModel.value?.model_url;
+});
+
+// 模型URL
+const modelUrl = computed(() => {
+  if (!productModel.value?.model_url) return null;
+
+  if (productModel.value.model_url.startsWith("/")) {
+    return `http://127.0.0.1:3007${productModel.value.model_url}`;
+  }
+
+  return productModel.value.model_url;
+});
+
+// 處理縮略圖點擊
+function handleThumbnailClick(index: number) {
+  // 更新當前圖片索引
+  currentImageIndex.value = index;
+
+  // 如果當前是模型視圖，切換回圖片視圖
+  if (viewMode.value === "model") {
+    viewMode.value = "image";
+  }
+}
+
+// 獲取圖片完整URL
+function getImageUrl(url: string) {
+  if (!url) return "/img/placeholder.png";
+
+  if (url.startsWith("/")) {
+    return `http://127.0.0.1:3007${url}`;
+  }
+
+  return url;
+}
+
+// 獲取縮略圖URL (與原圖相同)
+function getThumbnailUrl(url: string) {
+  return getImageUrl(url);
+}
+
+//直接傳商品資訊讓數量選擇器處理
 const handleAddToCart = () => {
   // 檢查用戶是否已登入
   if (!userStore.isLoggedIn) {
@@ -100,11 +238,8 @@ const handleAddToCart = () => {
   if (!productModel.value) return;
   
   try {
-    // 發出加入購物車事件，傳遞完整商品信息，包括庫存
+    // 直接傳遞原始商品對象，讓 QuantitySelector 自行處理
     emit('addToCart', productModel.value);
-    
-    // 注意：不要在這裡立即關閉模態框，應該在確認添加成功後再關閉
-    // 所以我們移除了 visibleModel.value = false; 這一行
   } catch (error) {
     if (error instanceof Error) {
       ElMessage.error(error.message);
@@ -113,6 +248,9 @@ const handleAddToCart = () => {
     }
   }
 };
+
+// 定義事件
+const emit = defineEmits(["addToCart", "close"]);
 </script>
 
 <style scoped lang="scss">
@@ -143,14 +281,72 @@ const handleAddToCart = () => {
   }
 
   .detail-image {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .image-container {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      aspect-ratio: 4/3;
+      background-color: #f9f9f9;
+
+      .view-toggle {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 10;
+        background-color: rgba(255, 255, 255, 0.8);
+        border-radius: 8px;
+        padding: 4px;
+      }
+
+      .image-view,
+      .model-view {
+        width: 100%;
+        height: 100%;
+
+        .main-image {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+      }
+    }
+
+    .image-thumbnails {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+
+      .thumbnail {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+
+        &:hover {
+          opacity: 0.9;
+        }
+
+        &.active {
+          opacity: 1;
+          border-color: $primary-b-d;
+        }
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+      }
     }
   }
 

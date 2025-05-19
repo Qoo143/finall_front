@@ -16,6 +16,9 @@
       <div class="product-info-mini">
         <div class="product-name">{{ productModel.name }}</div>
         <div class="product-price">${{ productModel.price }}</div>
+        <div class="product-total">
+          總計: ${{ totalAmount.toLocaleString() }}
+        </div>
       </div>
       <div class="quantity-control">
         <span class="label">數量:</span>
@@ -51,6 +54,7 @@ interface Tag {
   name: string;
 }
 
+// 修改 Product 介面定義 要支援兩個模組傳進的資料
 interface Product {
   id: number;
   name: string;
@@ -59,7 +63,13 @@ interface Product {
   stock: number;
   is_active?: number;
   category_id?: number;
-  main_image_url: string;
+  main_image_url?: string; // 從產品列表來的圖片
+  images?: {
+    // 從詳情視圖來的圖片
+    id: number;
+    file: string;
+    is_main: number;
+  }[];
   tags?: Tag[];
 }
 
@@ -75,17 +85,34 @@ const quantityValue = ref(1);
 // 定義事件
 const emit = defineEmits(["confirm", "cancel"]);
 
-// 獲取商品圖片 URL
+//productImageUrl 計算屬性
 const productImageUrl = computed(() => {
-  if (!productModel.value?.main_image_url) return "/img/placeholder.png";
+  if (!productModel.value) return "/img/placeholder.png";
 
-  if (productModel.value.main_image_url.startsWith("/")) {
-    return `http://127.0.0.1:3007${productModel.value.main_image_url}`;
+  // 從 main_image_url 獲取圖片 (產品列表)
+  if (productModel.value.main_image_url) {
+    const url = productModel.value.main_image_url;
+    return url.startsWith("/") ? `http://127.0.0.1:3007${url}` : url;
   }
 
-  return productModel.value.main_image_url;
+  // 從 images 數組獲取圖片 (詳情彈窗)
+  if (productModel.value.images && productModel.value.images.length > 0) {
+    // 查找主圖
+    const mainImage = productModel.value.images.find(
+      (img) => img.is_main === 1
+    );
+    const url = mainImage ? mainImage.file : productModel.value.images[0].file;
+    return url.startsWith("/") ? `http://127.0.0.1:3007${url}` : url;
+  }
+
+  return "/img/placeholder.png";
 });
 
+// 總金額計算
+const totalAmount = computed(() => {
+  if (!productModel.value) return 0;
+  return productModel.value.price * quantityValue.value;
+});
 
 // 計算目前購物車中已有的商品數量
 const existingQuantity = computed(() => {
@@ -181,6 +208,12 @@ const confirmSelection = () => {
       color: $primary-y;
       font-weight: 700;
       font-size: 18px;
+    }
+    .product-total {
+      margin-top: 8px;
+      font-weight: 600;
+      font-size: 16px;
+      color: $primary-b-d;
     }
   }
 

@@ -34,7 +34,7 @@ import { ref, onMounted } from "vue";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/ScrollTrigger";
 import { useScrollLock } from "@/utils/useScrollLock";
-// 使用滾動鎖定 Hook
+// 使用滾動鎖定Hook
 const { lockScroll, unlockScroll } = useScrollLock();
 
 gsap.registerPlugin(ScrollTrigger);
