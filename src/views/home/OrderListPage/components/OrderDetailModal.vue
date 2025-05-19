@@ -3,6 +3,7 @@
     v-model="dialogVisible"
     title="訂單詳情"
     width="70%"
+    top="2vh"
     destroy-on-close
     @closed="onDialogClosed"
   >
@@ -25,7 +26,7 @@
           </div>
         </div>
       </div>
-      
+
       <div class="detail-shipping">
         <h3>收貨信息</h3>
         <div class="shipping-grid">
@@ -43,15 +44,15 @@
           </div>
         </div>
       </div>
-      
+
       <div class="detail-items">
         <h3>訂單商品</h3>
         <el-table :data="order.items" stripe style="width: 100%">
           <el-table-column label="商品圖片" width="120">
             <template #default="scope">
-              <img 
-                :src="getProductImageUrl(scope.row.image_url)" 
-                :alt="scope.row.product_name" 
+              <img
+                :src="getProductImageUrl(scope.row.image_url)"
+                :alt="scope.row.product_name"
                 class="detail-item-image"
               />
             </template>
@@ -70,29 +71,39 @@
           </el-table-column>
         </el-table>
       </div>
-      
+
       <div class="detail-payment">
         <h3>付款信息</h3>
         <div class="payment-grid">
           <div class="payment-item">
             <span class="label">支付方式:</span>
-            <span class="value">{{ getPaymentMethod(order.payment_method) }}</span>
+            <span class="value">{{
+              getPaymentMethod(order.payment_method)
+            }}</span>
           </div>
           <div class="payment-item">
             <span class="label">商品總額:</span>
-            <span class="value">${{ (order.total_amount - order.shipping_fee).toLocaleString() }}</span>
+            <span class="value"
+              >${{
+                (order.total_amount - order.shipping_fee).toLocaleString()
+              }}</span
+            >
           </div>
           <div class="payment-item">
             <span class="label">運費:</span>
-            <span class="value">${{ order.shipping_fee.toLocaleString() }}</span>
+            <span class="value"
+              >${{ order.shipping_fee.toLocaleString() }}</span
+            >
           </div>
           <div class="payment-item payment-total">
             <span class="label">總計:</span>
-            <span class="value total-price">${{ order.total_amount.toLocaleString() }}</span>
+            <span class="value total-price"
+              >${{ order.total_amount.toLocaleString() }}</span
+            >
           </div>
         </div>
       </div>
-      
+
       <div v-if="order.note" class="detail-note">
         <h3>訂單備註</h3>
         <div class="note-content">
@@ -100,13 +111,13 @@
         </div>
       </div>
     </div>
-    
+
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="dialogVisible = false">關閉</el-button>
-        <el-button 
-          v-if="order && order.status === 0" 
-          type="danger" 
+        <el-button
+          v-if="order && order.status === 0"
+          type="danger"
           @click="onCancelOrder"
         >
           取消訂單
@@ -117,86 +128,102 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, defineEmits, watch } from 'vue';
+import { ref, defineProps, defineEmits, watch } from "vue";
 
 // 定義props - 接收訂單數據
 const props = defineProps({
   visible: {
     type: Boolean,
-    default: false
+    default: false,
   },
   order: {
     type: Object,
-    default: null
-  }
+    default: null,
+  },
 });
 
 // 定義事件
-const emit = defineEmits(['update:visible', 'cancel-order']);
+const emit = defineEmits(["update:visible", "cancel-order"]);
 
 // 對話框狀態
 const dialogVisible = ref(props.visible);
 
 // 監聽visible變化
-watch(() => props.visible, (newVal) => {
-  dialogVisible.value = newVal;
-});
+watch(
+  () => props.visible,
+  (newVal) => {
+    dialogVisible.value = newVal;
+  }
+);
 
 // 監聽對話框狀態變化
 watch(dialogVisible, (newVal) => {
-  emit('update:visible', newVal);
+  emit("update:visible", newVal);
 });
 
 // 訂單狀態文字
 const getStatusText = (status: number) => {
   switch (status) {
-    case 0: return '待處理';
-    case 1: return '已發貨';
-    default: return '未知狀態';
+    case 0:
+      return "待處理";
+    case 1:
+      return "已發貨";
+    default:
+      return "未知狀態";
   }
 };
 
 // 訂單狀態標籤類型
 const getStatusType = (status: number) => {
   switch (status) {
-    case 0: return 'warning';
-    case 1: return 'success';
-    default: return 'info';
+    case 0:
+      return "warning";
+    case 1:
+      return "success";
+    default:
+      return "info";
   }
 };
 
 // 支付方式文字
 const getPaymentMethod = (method: number) => {
   switch (method) {
-    case 1: return '貨到付款';
-    default: return '未知方式';
+    case 1:
+      return "貨到付款";
+    default:
+      return "未知方式";
   }
 };
 
 // 獲取商品圖片 URL
 const getProductImageUrl = (url?: string) => {
-  if (!url) return '/img/placeholder.png';
-  if (url.startsWith('http')) return url;
+  if (!url) return "/img/placeholder.png";
+  if (url.startsWith("http")) return url;
   return `http://127.0.0.1:3007${url}`;
 };
 
 // 格式化日期
 const formatDate = (dateStr: string) => {
-  if (!dateStr) return '-';
+  if (!dateStr) return "-";
   const date = new Date(dateStr);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0"
+  )}-${String(date.getDate()).padStart(2, "0")} ${String(
+    date.getHours()
+  ).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 };
 
 // 格式化電話號碼（保護隱私）
 const formatPhone = (phone: string) => {
-  if (!phone) return '-';
+  if (!phone) return "-";
   // 顯示前兩碼和後兩碼，中間用星號替代
-  return phone.slice(0, 2) + '******' + phone.slice(-2);
+  return phone.slice(0, 2) + "******" + phone.slice(-2);
 };
 
 // 格式化地址
 const formatAddress = (order: any) => {
-  if (!order) return '-';
+  if (!order) return "-";
   return `${order.city}${order.district}${order.address}`;
 };
 
@@ -208,7 +235,7 @@ const onDialogClosed = () => {
 // 取消訂單
 const onCancelOrder = () => {
   if (!props.order) return;
-  emit('cancel-order', props.order);
+  emit("cancel-order", props.order);
 };
 </script>
 
@@ -219,18 +246,18 @@ const onCancelOrder = () => {
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 24px;
-    
+
     .detail-order-info {
       display: flex;
       flex-wrap: wrap;
       gap: 24px;
-      
+
       .detail-info-item {
         .label {
           color: $text-d;
           margin-right: 8px;
         }
-        
+
         .value {
           font-weight: 600;
           color: $primary-b-d;
@@ -238,7 +265,7 @@ const onCancelOrder = () => {
       }
     }
   }
-  
+
   h3 {
     font-size: 18px;
     font-weight: 600;
@@ -247,38 +274,43 @@ const onCancelOrder = () => {
     padding-bottom: 8px;
     border-bottom: 1px solid #f0f0f0;
   }
-  
-  .detail-shipping, .detail-payment, .detail-note {
+
+  .detail-shipping,
+  .detail-payment,
+  .detail-note {
     margin-bottom: 32px;
   }
-  
-  .shipping-grid, .payment-grid {
+
+  .shipping-grid,
+  .payment-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
-    
-    .shipping-item, .payment-item {
+
+    .shipping-item,
+    .payment-item {
       display: flex;
-      
+
       .label {
         color: $text-d;
         margin-right: 8px;
         min-width: 80px;
       }
-      
+
       .value {
         font-weight: 500;
       }
-      
-      &.shipping-address, &.payment-total {
+
+      &.shipping-address,
+      &.payment-total {
         grid-column: span 2;
       }
-      
+
       &.payment-total {
         margin-top: 8px;
         padding-top: 16px;
         border-top: 1px solid #f0f0f0;
-        
+
         .value.total-price {
           color: $primary-y;
           font-size: 20px;
@@ -287,10 +319,10 @@ const onCancelOrder = () => {
       }
     }
   }
-  
+
   .detail-items {
     margin-bottom: 32px;
-    
+
     .detail-item-image {
       width: 60px;
       height: 60px;
@@ -298,7 +330,7 @@ const onCancelOrder = () => {
       border-radius: 4px;
     }
   }
-  
+
   .note-content {
     background-color: #f9f9f9;
     padding: 16px;
@@ -332,8 +364,9 @@ const onCancelOrder = () => {
 :deep(.el-button--danger) {
   background-color: #f56c6c;
   border-color: #f56c6c;
-  
-  &:hover, &:focus {
+
+  &:hover,
+  &:focus {
     background-color: #f78989;
     border-color: #f78989;
   }
@@ -343,5 +376,16 @@ const onCancelOrder = () => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+:deep(.el-button--primary) {
+  background-color: $primary-b-d;
+  border-color: $primary-b-d;
+
+  &:hover,
+  &:focus {
+    background-color: $primary-b;
+    border-color: $primary-b;
+  }
 }
 </style>

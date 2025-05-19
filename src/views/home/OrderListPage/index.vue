@@ -88,7 +88,7 @@
               <div class="order-actions">
                 <el-button
                   type="primary"
-                  plain
+                  
                   size="small"
                   @click="viewOrderDetail(scope.row)"
                 >
@@ -97,7 +97,7 @@
                 <el-button
                   v-if="scope.row.status === 0"
                   type="danger"
-                  plain
+              
                   size="small"
                   @click="confirmCancelOrder(scope.row)"
                 >
