@@ -10,12 +10,13 @@
       />
     </div>
     <div ref="blackSection" class="blackSection">
-      <p ref="firstP" class="firstP">Kindness-driven design</p>
-      <p ref="secondP" class="secondP">Where empathy meets innovation.</p>
+      <p ref="firstP" class="firstP">善念驅動設計</p>
+      <p ref="secondP" class="secondP">體驗以人為本的未來出行</p>
       <p ref="thirdP" class="thirdP">
-        Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero minima
-        consequatur rerum quia, iusto voluptatum sint officiis nam nesciunt nisi
-        enim, ducimus tempora, reprehenderit aliquid necessitatibus labore
+        我們深信科技應該服務於人性而非相反<br />
+        每一條線條、每一個界面、每一次互動，都經過精心設計<br />
+        不僅是為了展現未來感，更是為了讓科技融入生活的自然節奏<br />
+        我們不只打造交通工具，而是創造與使用者共同成長
       </p>
     </div>
   </div>
@@ -218,6 +219,7 @@ onMounted(() => {
     }
     .secondP {
       font-size: 5rem;
+      color: $primary-b-ll;
     }
     .thirdP {
       grid-column: 1; // 指定列

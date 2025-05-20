@@ -23,7 +23,7 @@
       <!-- 右側購物車和用戶選項 -->
       <div class="navbar__right">
         <button @click="openCart" class="cart-button">
-          購物車
+          <el-icon :size="24"><ShoppingCart /></el-icon>
           <span v-if="cartStore.totalItems > 0" class="cart-badge">
             {{ cartStore.totalItems }}
           </span>
@@ -239,22 +239,41 @@ const goToAdmin = () => {
     align-items: center;
     gap: 0.75rem;
     justify-self: end; // 靠右
+
     .cart-button {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .cart-badge {
-      background-color: $primary-y;
-      color: white;
-      border-radius: 50%;
-      font-size: 12px;
-      width: 18px;
-      height: 18px;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-left: 5px;
+      // padding: 8px;
+
+      .cart-badge {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        background-color: $primary-y;
+        color: white;
+        border-radius: 50%;
+        font-size: 0.8rem;
+        min-width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        font-weight: bold;
+        box-sizing: border-box;
+
+        // 當數字超過兩位數時，確保標記能容納
+        &:has(> span) {
+          min-width: auto;
+        }
+      }
+    }
+
+    .cart-icon-container {
+      position: relative;
+      display: inline-flex;
     }
 
     .user-options {

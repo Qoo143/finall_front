@@ -20,7 +20,7 @@
       <!-- 此按鈕只是一個點，用偽元素寫 -->
       <div class="wrapperBtn">
         <div class="linkButton">
-          <span href=""></span>
+          <span href="" @click="goto('ProductsPage')"></span>
         </div>
       </div>
     </div>
@@ -31,6 +31,12 @@
 import { ref, onMounted } from "vue";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useRouter } from "vue-router";
+const router = useRouter();
+
+const goto = (name: string) => {
+  router.push(`/${name}`);
+};
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -41,32 +47,28 @@ const contentCard = ref(); //卡片本體框
 //準備文字檔
 const productCardText = [
   {
-    title: "Lorem ipsum",
-    text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, ducimus.",
+    title: "PRECISION VISION",
+    text: "Cutting-edge LED matrix technology that adapts to every driving condition.",
   },
   {
-    title: "Lorem ipsum",
-    text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, ducimus.",
+    title: "ELEGANT CURVES",
+    text: "Revolutionary design philosophy where form meets function. Distinctive signature at every angle.",
   },
   {
-    title: "Lorem ipsum",
-    text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, ducimus.",
+    title: "DAYLIGHT BRILLIANCE",
+    text: "Smart illumination that adjusts to ambient light. Enhanced visibility in all weather conditions.",
   },
   {
-    title: "Lorem ipsum",
-    text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, ducimus.",
+    title: "GOLDEN HOUR",
+    text: "Amber-hued lighting signature that commands attention. Precision optics crafted for the perfect beam pattern.",
   },
   {
-    title: "Lorem ipsum",
-    text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, ducimus.",
+    title: "SHADOW PLAY",
+    text: "Dynamic lighting that communicates with other drivers. Sleek contours revealing the soul of engineering.",
   },
   {
-    title: "Lorem ipsum",
-    text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, ducimus.",
-  },
-  {
-    title: "Lorem ipsum",
-    text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Alias, ducimus.",
+    title: "STEALTH AESTHETICS",
+    text: "Minimalist design with maximum impact. Light architecture that defines the future.",
   },
 ];
 
@@ -134,8 +136,6 @@ onMounted(() => {
     observer.observe(card);
   });
 });
-
-
 </script>
 
 <style scoped lang="scss">
@@ -205,8 +205,6 @@ onMounted(() => {
       width: 180px;
       height: 55px;
 
-      
-
       .linkButton {
         position: relative;
         transform-style: preserve-3d;
@@ -252,7 +250,7 @@ onMounted(() => {
             // background-color: $primary-b-d;
           }
           &::after {
-            content: "給我點下去";
+            content: "點擊瀏覽";
             color: white;
             // background-color: $primary-b-l;
             transform: rotateX(90deg) translateZ(25px);

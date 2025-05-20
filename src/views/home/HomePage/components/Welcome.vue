@@ -1,9 +1,9 @@
 <template>
   <div ref="welcome" class="welcome">
     <div ref="welcomeContent" class="welcomeContent">
-      <p>未來，不是想像，而是選擇未來，不是想像，而是選擇</p>
-      <p>每一次啟動，都是對科技的深刻理解未來，不是想像，而是選擇</p>
-      <p>不只是速度，而是無限可未來，不是想像，而是選擇能</p>
+      <p>每一次啟動，都是對未知的探索</p>
+      <p>每一次轉向，都是對傳統的挑戰</p>
+      <p>不追求速度與距離，而是創造全新的存在方式</p>
     </div>
   </div>
 </template>

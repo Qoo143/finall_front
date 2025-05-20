@@ -1,9 +1,9 @@
 <template>
   <div ref="wrapper" class="wrapper">
     <div class="carText">
-      <p ref="carText1">這不只是車是你與未來的連結</p>
-      <p ref="carText2">未來不再等待</p>
-      <p ref="carText3">開啟未來視野 駕馭智能生活</p>
+      <p ref="carText1">這不只是車</p>
+      <p ref="carText2">這是你與未來的連結</p>
+      <p ref="carText3">開啟未來視野&nbsp;&nbsp;&nbsp;&nbsp;駕馭智能生活</p>
     </div>
 
     <!-- 車車背景 -->
@@ -102,7 +102,7 @@ onMounted(() => {
           y: 50,
           opacity: 0,
           duration: 0.7,
-          ease: "back()",
+          ease: "back",
         },
         "-=0.1"
       )
@@ -112,7 +112,7 @@ onMounted(() => {
           y: -150,
           opacity: 0,
           duration: 1,
-          ease: "back()",
+          ease: "back",
         },
         "-=0.9"
       );
@@ -192,11 +192,11 @@ onMounted(() => {
     p {
       color: $primary-y;
       font-weight: 900;
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
     }
     p:nth-of-type(2) {
       font-size: 1.5rem;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
       color: $primary-b-ll;
       font-weight: 900;
     }
