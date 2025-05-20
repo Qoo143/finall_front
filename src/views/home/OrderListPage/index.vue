@@ -124,11 +124,9 @@
     <div v-if="orders.length > 0" class="pagination-container">
       <el-pagination
         v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :page-sizes="[5, 10, 20]"
-        layout="total, sizes, prev, pager, next, jumper"
+        :page-size="pageSize"
+        layout="total, prev, pager, next, jumper"
         :total="totalOrders"
-        @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
         background
       />
@@ -254,8 +252,15 @@ const fetchOrders = async () => {
       }
 
       if (dateRange.value && dateRange.value[0] && dateRange.value[1]) {
-        const startDate = new Date(dateRange.value[0]).getTime();
-        const endDate = new Date(dateRange.value[1]).getTime();
+        // 起始日期設為當天的 00:00:00
+        const startDateObj = new Date(dateRange.value[0]);
+        startDateObj.setHours(0, 0, 0, 0);
+        const startDate = startDateObj.getTime();
+
+        // 結束日期設為當天的 23:59:59.999
+        const endDateObj = new Date(dateRange.value[1]);
+        endDateObj.setHours(23, 59, 59, 999);
+        const endDate = endDateObj.getTime();
 
         orders.value = orders.value.filter((order) => {
           const orderDate = new Date(order.created_time).getTime();
@@ -289,13 +294,6 @@ const fetchOrders = async () => {
 const resetFilters = () => {
   filterStatus.value = null;
   dateRange.value = null;
-  currentPage.value = 1;
-  fetchOrders();
-};
-
-// 處理分頁大小變更
-const handleSizeChange = (size: number) => {
-  pageSize.value = size;
   currentPage.value = 1;
   fetchOrders();
 };

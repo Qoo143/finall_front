@@ -1,12 +1,12 @@
 <template>
-  <el-dialog
-    v-model="visibleModel"
-    title="商品詳情"
-    width="70%"
-    top="5vh"
-    destroy-on-close
-  >
-    <div v-if="productModel" class="product-detail">
+  <el-dialog v-model="visibleModel" width="70%" top="5vh" destroy-on-close>
+    <!-- 加載狀態顯示 -->
+    <div v-if="isLoading" class="loading-container">
+      <el-skeleton :rows="3" animated />
+    </div>
+
+    <!-- 商品詳情區域 -->
+    <div v-else-if="localProduct" class="product-detail">
       <!-- 左側區域：商品圖片/3D模型展示區 -->
       <div class="detail-image">
         <!-- 主視覺區域 -->
@@ -38,7 +38,7 @@
           <div v-if="viewMode === 'image'" class="image-view">
             <img
               :src="currentImageUrl"
-              :alt="productModel.name"
+              :alt="localProduct.name || '商品圖片'"
               class="main-image"
             />
           </div>
@@ -76,25 +76,36 @@
       </div>
 
       <div class="detail-info">
-        <h2>{{ productModel.name }}</h2>
-        <div class="price">${{ productModel.price }}</div>
-        
+        <h2>{{ localProduct.name }}</h2>
+        <div class="price">${{ localProduct.price }}</div>
+
         <!-- 添加商品分類顯示 -->
         <div class="category">
           <span class="label">分類:</span>
           <span class="value">{{ getCategoryName }}</span>
         </div>
-        
-        <div class="stock">庫存: {{ productModel.stock }}</div>
-        <div class="tags">
-          <span v-for="tag in productModel.tags" :key="tag.id" class="tag">
+
+        <div class="stock">庫存: {{ localProduct.stock }}</div>
+        <div
+          class="tags"
+          v-if="localProduct.tags && localProduct.tags.length > 0"
+        >
+          <span v-for="tag in localProduct.tags" :key="tag.id" class="tag">
             {{ tag.name }}
           </span>
         </div>
+
+        <!-- 商品建立時間顯示 -->
+        <div class="creation-time" v-if="localProduct.created_time">
+          <span>上架時間: {{ formatDate(localProduct.created_time) }}</span>
+        </div>
+
+        <!-- 商品描述 -->
         <div class="description">
           <h3>商品描述</h3>
-          <p>{{ productModel.description || "暫無描述" }}</p>
+          <p>{{ localProduct.description || "暫無描述" }}</p>
         </div>
+
         <div class="actions">
           <el-button
             type="primary"
@@ -136,114 +147,160 @@ interface Category {
 
 interface Product {
   id: number;
-  name: string;
+  name?: string;
   description?: string;
-  price: number;
-  stock: number;
+  price?: number;
+  stock?: number;
   is_active?: number;
   category_id?: number;
-  main_image_url: string;
+  main_image_url?: string;
   tags?: Tag[];
   images?: ProductImage[];
   model_url?: string;
+  created_time?: string; // 新增商品建立時間字段
 }
 
 const userStore = useUserInfoStore();
 
-// 使用 defineModel 雙向綁定，確保類型正確
+// 使用 defineModel 雙向綁定
 const visibleModel = defineModel<boolean>("visible", { default: false });
 const productModel = defineModel<Product | null>("product", { default: null });
 const isLoadingModel = defineModel<boolean>("isLoading", { default: false });
 
-// 商品圖片相關狀態
+// 本地狀態
+const localProduct = ref<Product | null>(null);
+const isLoading = ref(false);
 const productImages = ref<ProductImage[]>([]);
 const currentImageIndex = ref(0);
 const viewMode = ref<"image" | "model">("image");
-
-// 新增: 分類列表
 const categories = ref<Category[]>([]);
 
-// 新增: 獲取分類列表
-const fetchCategories = async () => {
+// 格式化日期函數
+const formatDate = (dateStr?: string): string => {
+  if (!dateStr) return "未知";
+
   try {
-    const res = await axios.get("http://127.0.0.1:3007/categories");
-    if (res.data && res.data.code === 0) {
-      categories.value = res.data.data || [];
-    }
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   } catch (error) {
-    console.error("獲取分類列表失敗:", error);
+    console.error("日期格式化錯誤:", error);
+    return "日期格式錯誤";
   }
 };
 
-// 新增: 計算商品所屬分類名稱
+// 監聽對話框和產品變化
+watch([visibleModel, productModel], async ([visible, product]) => {
+  if (visible && product && product.id) {
+    // 清空舊數據
+    localProduct.value = null;
+    productImages.value = [];
+
+    // 設置加載狀態
+    isLoading.value = true;
+    isLoadingModel.value = true;
+
+    try {
+      // 並行獲取商品詳情、標籤和分類列表
+      const [productRes, categoriesRes, tagsRes] = await Promise.all([
+        axios.get(`http://127.0.0.1:3007/products/${product.id}`),
+        axios.get("http://127.0.0.1:3007/categories"),
+        axios.get(`http://127.0.0.1:3007/api/products/${product.id}/tags`),
+      ]);
+
+      if (productRes.data && productRes.data.code === 0) {
+        // 獲取基本商品信息
+        localProduct.value = productRes.data.data;
+
+        // 處理圖片
+        processProductImages();
+      }
+
+      // 獲取分類信息
+      if (categoriesRes.data && categoriesRes.data.code === 0) {
+        categories.value = categoriesRes.data.data || [];
+      }
+
+      // 確保標籤數據正確加載
+      if (tagsRes.data && tagsRes.data.code === 0 && localProduct.value) {
+        // 明確設置標籤數據
+        localProduct.value.tags = tagsRes.data.data || [];
+      }
+
+      // 重置視圖模式
+      viewMode.value = "image";
+    } catch (error) {
+      console.error("獲取商品詳情失敗:", error);
+      ElMessage.error("獲取商品詳情失敗，請稍後再試");
+    } finally {
+      isLoading.value = false;
+      isLoadingModel.value = false;
+    }
+  }
+});
+
+// 處理產品圖片
+const processProductImages = () => {
+  if (!localProduct.value) return;
+
+  // 1. 從 images 陣列獲取圖片 (如果有)
+  if (localProduct.value.images && localProduct.value.images.length > 0) {
+    productImages.value = [...localProduct.value.images];
+
+    // 找到主圖的索引
+    const mainIdx = productImages.value.findIndex((img) => img.is_main === 1);
+    currentImageIndex.value = mainIdx >= 0 ? mainIdx : 0;
+  }
+  // 2. 如果沒有圖片陣列但有主圖 URL (從產品列表來的情況)
+  else if (localProduct.value.main_image_url) {
+    productImages.value = [
+      {
+        id: 0,
+        file: localProduct.value.main_image_url,
+        is_main: 1,
+      },
+    ];
+    currentImageIndex.value = 0;
+  }
+  // 3. 無圖片情況
+  else {
+    productImages.value = [];
+    currentImageIndex.value = 0;
+  }
+};
+
+// 計算屬性: 獲取商品所屬分類名稱
 const getCategoryName = computed(() => {
-  if (!productModel.value || !productModel.value.category_id) return "未分類";
-  
+  if (!localProduct.value || !localProduct.value.category_id) return "未分類";
+
   const category = categories.value.find(
-    c => c.id === productModel.value?.category_id
+    (c) => c.id === localProduct.value?.category_id
   );
-  
+
   return category ? category.name : "未分類";
 });
-
-// 在組件掛載時獲取分類列表
-onMounted(() => {
-  fetchCategories();
-});
-
-// 監聽產品變化，更新圖片和索引
-watch(
-  () => productModel.value,
-  (newProduct) => {
-    if (newProduct && newProduct.images && newProduct.images.length > 0) {
-      productImages.value = newProduct.images;
-
-      // 找到主圖的索引並設為當前顯示圖片
-      const mainImageIndex = newProduct.images.findIndex(
-        (img) => img.is_main === 1
-      );
-      currentImageIndex.value = mainImageIndex >= 0 ? mainImageIndex : 0;
-    } else if (newProduct) {
-      // 如果沒有圖片陣列但有主圖，創建一個只包含主圖的圖片陣列
-      productImages.value = [
-        {
-          id: 0,
-          file: newProduct.main_image_url,
-          is_main: 1,
-        },
-      ];
-      currentImageIndex.value = 0;
-    } else {
-      productImages.value = [];
-      currentImageIndex.value = 0;
-    }
-
-    // 重置視圖模式為圖片
-    viewMode.value = "image";
-  },
-  { immediate: true }
-);
 
 // 當前顯示的圖片URL
 const currentImageUrl = computed(() => {
   if (productImages.value.length === 0) return "/img/placeholder.png";
-  return getImageUrl(productImages.value[currentImageIndex.value].file);
+
+  const currentImage = productImages.value[currentImageIndex.value];
+  return currentImage ? getImageUrl(currentImage.file) : "/img/placeholder.png";
 });
 
 // 判斷是否有模型可顯示
 const hasModel = computed(() => {
-  return !!productModel.value?.model_url;
+  return !!localProduct.value?.model_url;
 });
 
 // 模型URL
 const modelUrl = computed(() => {
-  if (!productModel.value?.model_url) return null;
+  if (!localProduct.value?.model_url) return null;
 
-  if (productModel.value.model_url.startsWith("/")) {
-    return `http://127.0.0.1:3007${productModel.value.model_url}`;
-  }
-
-  return productModel.value.model_url;
+  const url = localProduct.value.model_url;
+  return url.startsWith("/") ? `http://127.0.0.1:3007${url}` : url;
 });
 
 // 處理縮略圖點擊
@@ -260,12 +317,7 @@ function handleThumbnailClick(index: number) {
 // 獲取圖片完整URL
 function getImageUrl(url: string) {
   if (!url) return "/img/placeholder.png";
-
-  if (url.startsWith("/")) {
-    return `http://127.0.0.1:3007${url}`;
-  }
-
-  return url;
+  return url.startsWith("/") ? `http://127.0.0.1:3007${url}` : url;
 }
 
 // 獲取縮略圖URL (與原圖相同)
@@ -273,7 +325,7 @@ function getThumbnailUrl(url: string) {
   return getImageUrl(url);
 }
 
-//直接傳商品資訊讓數量選擇器處理
+// 加入購物車
 const handleAddToCart = () => {
   // 檢查用戶是否已登入
   if (!userStore.isLoggedIn) {
@@ -281,11 +333,11 @@ const handleAddToCart = () => {
     return;
   }
 
-  if (!productModel.value) return;
+  if (!localProduct.value) return;
 
   try {
-    // 直接傳遞原始商品對象，讓 QuantitySelector 自行處理
-    emit("addToCart", productModel.value);
+    // 使用 localProduct 替代 productModel
+    emit("addToCart", localProduct.value);
   } catch (error) {
     if (error instanceof Error) {
       ElMessage.error(error.message);
@@ -300,7 +352,7 @@ const emit = defineEmits(["addToCart", "close"]);
 </script>
 
 <style scoped lang="scss">
-/* 商品詳情彈窗樣式 */
+/* 商品詳情彈窗樣式 - 樣式保持不變 */
 :deep(.el-dialog) {
   border-radius: 16px;
   overflow: hidden;
@@ -308,8 +360,7 @@ const emit = defineEmits(["addToCart", "close"]);
   .el-dialog__header {
     background-color: $primary-b-d;
     color: rgb(54, 116, 100);
-    padding: 16px 20px;
-
+    
     .el-dialog__title {
       color: white;
       font-weight: 600;
@@ -317,10 +368,17 @@ const emit = defineEmits(["addToCart", "close"]);
   }
 }
 
+/* 加載狀態容器樣式 */
+.loading-container {
+  padding: 40px;
+  text-align: center;
+}
+
 .product-detail {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 32px;
+  padding-top: 2rem;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
@@ -335,18 +393,13 @@ const emit = defineEmits(["addToCart", "close"]);
       position: relative;
       border-radius: 16px;
       overflow: hidden;
-      // box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       aspect-ratio: 4/3;
-      // background-color: #f9f9f9;
 
       .view-toggle {
         position: absolute;
         top: 24px;
         right: 24px;
         z-index: 10;
-        // background-color: rgba(255, 255, 255, 0.8);
-        // border-radius: 8px;
-        // padding: 4px;
       }
 
       .image-view,
@@ -413,26 +466,17 @@ const emit = defineEmits(["addToCart", "close"]);
       margin-bottom: 16px;
     }
 
-    /* 新增分類樣式 */
     .category {
       font-size: 18px;
       color: $text-d;
       margin-bottom: 16px;
       display: flex;
       align-items: center;
-      
+
       .label {
         font-weight: 500;
         margin-right: 8px;
       }
-      
-      // .value {
-      //   background-color: $primary-b-ll;
-      //   color: $primary-b-d;
-      //   padding: 4px 10px;
-      //   border-radius: 6px;
-      //   font-size: 16px;
-      // }
     }
 
     .stock {
@@ -460,7 +504,7 @@ const emit = defineEmits(["addToCart", "close"]);
       background-color: $bg-1;
       padding: 16px;
       border-radius: 12px;
-      margin-bottom: 24px;
+      margin-bottom: 16px;
 
       h3 {
         font-size: 18px;
@@ -473,6 +517,21 @@ const emit = defineEmits(["addToCart", "close"]);
         font-size: 16px;
         line-height: 1.6;
         color: $text-d;
+      }
+    }
+
+    /* 新增商品建立時間樣式 */
+    .creation-time {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: #888; /* 使用較淡的顏色，不搶眼 */
+
+      .el-icon {
+        font-size: 16px;
+        color: $primary-b-l;
       }
     }
 

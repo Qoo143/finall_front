@@ -53,6 +53,7 @@
               format="YYYY/MM/DD"
               value-format="YYYY-MM-DD"
               class="sidebar-date-picker"
+              @change="checkDateRange"
             />
             <el-date-picker
               v-model="endDate"
@@ -61,7 +62,11 @@
               format="YYYY/MM/DD"
               value-format="YYYY-MM-DD"
               class="sidebar-date-picker"
+              @change="checkDateRange"
             />
+            <div v-if="dateError" class="date-error-message">
+              請同時設定開始和結束日期
+            </div>
           </div>
         </div>
 
@@ -72,6 +77,7 @@
             class="search-btn"
             :icon="Search"
             :loading="isLoading"
+            :disabled="isSearchDisabled"
           >
             搜尋
           </el-button>
@@ -144,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import axios from "axios";
 import { Search } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
@@ -184,6 +190,7 @@ const catValue = ref("");
 const tagValue = ref<string[]>([]);
 const startDate = ref("");
 const endDate = ref("");
+const dateError = ref(false);
 
 // 分頁相關
 const currentPage = ref(1);
@@ -202,6 +209,39 @@ const quantityDialogVisible = ref(false);
 const selectedCartProduct = ref<Product | null>(null);
 const selectedQuantity = ref(1);
 
+// 這個計算屬性用來控制搜索按鈕的禁用狀態
+const isSearchDisabled = computed(() => {
+  // 如果只填了一個日期，但沒有填另一個日期，則禁用搜索按鈕
+  return (startDate.value && !endDate.value) || (!startDate.value && endDate.value) || dateError.value;
+});
+
+// 檢查日期範圍的函數
+const checkDateRange = () => {
+  if ((startDate.value && !endDate.value) || (!startDate.value && endDate.value)) {
+    // 只填了一個日期
+    dateError.value = true;
+    return;
+  }
+  
+  // 檢查開始日期是否晚於結束日期
+  if (startDate.value && endDate.value) {
+    const start = new Date(startDate.value);
+    const end = new Date(endDate.value);
+    if (start > end) {
+      dateError.value = true;
+      ElMessage.warning("開始日期不能晚於結束日期");
+      return;
+    }
+  }
+  
+  dateError.value = false;
+};
+
+// 監聽日期變化
+watch([startDate, endDate], () => {
+  checkDateRange();
+});
+
 /**
  * 日期計算屬性 - 用於API請求
  */
@@ -216,6 +256,14 @@ const dateValue = computed(() => {
  * 查詢商品函數 - 使用後端 API 獲取商品列表
  */
 const fetchProducts = async () => {
+  // 檢查日期範圍
+  if (isSearchDisabled.value) {
+    if (dateError.value) {
+      ElMessage.warning("請確保日期設定完整且正確");
+    }
+    return;
+  }
+  
   try {
     isLoading.value = true;
 
@@ -323,6 +371,14 @@ const handlePageChange = (val: number) => {
  * 搜尋按鈕處理函數
  */
 const handleSearch = () => {
+  // 再次檢查日期範圍
+  if (isSearchDisabled.value) {
+    if (dateError.value) {
+      ElMessage.warning("請同時設定開始和結束日期");
+    }
+    return;
+  }
+  
   currentPage.value = 1; // 重置為第一頁
   fetchProducts();
 };
@@ -337,29 +393,15 @@ const handleReset = () => {
   tagValue.value = [];
   nameValue.value = "";
   currentPage.value = 1;
+  dateError.value = false; // 重設日期錯誤狀態
   fetchProducts();
 };
 
-// 開啟商品詳情彈窗並獲取完整商品信息
-const openProductDetail = async (product: Product) => {
-  try {
-    selectedProduct.value = product; // 先設置基本信息
-    detailDialogVisible.value = true; // 顯示對話框
-    isLoading.value = true; // 設置加載狀態
-    
-    // 請求詳細商品信息
-    const { data } = await axios.get(`http://127.0.0.1:3007/products/${product.id}`);
-    
-    if (data && data.code === 0) {
-      // 成功獲取完整信息後更新選中商品
-      selectedProduct.value = data.data;
-    }
-  } catch (error) {
-    console.error("獲取商品詳情失敗", error);
-    ElMessage.error("獲取商品詳情失敗，請稍後再試");
-  } finally {
-    isLoading.value = false;
-  }
+// 開啟商品詳情彈窗的方法 
+const openProductDetail = (product: Product) => {
+  // 只設置商品 ID，詳情由模態窗自己獲取
+  selectedProduct.value = { id: product.id } as Product;
+  detailDialogVisible.value = true;
 };
 
 /**
@@ -472,6 +514,13 @@ onMounted(() => {
     .sidebar-date-picker {
       width: 100%;
     }
+    
+    /* 添加日期錯誤提示樣式 */
+    .date-error-message {
+      color: #f56c6c;
+      font-size: 12px;
+      margin-top: 5px;
+    }
   }
 
   .sidebar-actions {
@@ -494,6 +543,11 @@ onMounted(() => {
 
       &:hover {
         background-color: $primary-b;
+      }
+      
+      &.is-disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
       }
     }
 
@@ -594,6 +648,12 @@ onMounted(() => {
 
 :deep(.el-button) {
   border-radius: 8px;
+}
+
+/* 禁用按鈕樣式 */
+:deep(.el-button.is-disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* 排序選擇器樣式修復 */
