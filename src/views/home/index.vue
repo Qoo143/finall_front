@@ -13,5 +13,6 @@ import Navbar from "@/views/home/components/Navbar.vue";
 .wrapper {
   width: 100%;
   height: 100%;
+  background-color: rgb(229, 232, 236);
 }
 </style>

@@ -2,7 +2,7 @@
   <el-dialog
     v-model="visibleModel"
     title="選擇數量"
-    width="320px"
+    width="640px"
     center
     :show-close="true"
     custom-class="quantity-dialog"
@@ -173,7 +173,7 @@ const confirmSelection = () => {
     padding: 16px;
     margin-right: 0;
     text-align: center;
-    border-bottom: 1px solid #f0f0f0;
+    color: red;
   }
 
   .el-dialog__body {
@@ -187,8 +187,7 @@ const confirmSelection = () => {
   align-items: center;
 
   .product-thumbnail {
-    width: 100px;
-    height: 100px;
+    width: 350px;
     object-fit: cover;
     border-radius: 8px;
     margin-bottom: 16px;

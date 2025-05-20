@@ -423,7 +423,6 @@ onMounted(() => {
 .wrapper {
   width: 100%;
   height: 100%;
-  background-color: #f9f9f9;
 }
 
 .products-container {
@@ -432,7 +431,6 @@ onMounted(() => {
   margin: 0 auto;
   padding: 8vh 0px 0px 16px;
   gap: 2rem;
-  background-color: #f9f9f9;
 }
 
 /* 左側篩選欄 */

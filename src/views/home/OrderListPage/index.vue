@@ -9,6 +9,7 @@
           <el-option label="全部訂單" :value="null" />
           <el-option label="待處理" :value="0" />
           <el-option label="已發貨" :value="1" />
+          <el-option label="已取消" :value="2" />
         </el-select>
 
         <el-date-picker
@@ -69,7 +70,7 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="訂單金額" width="140" align="right">
+          <el-table-column label="訂單金額" width="140">
             <template #default="scope">
               <span class="order-amount"
                 >${{ scope.row.total_amount.toLocaleString() }}</span
@@ -88,7 +89,6 @@
               <div class="order-actions">
                 <el-button
                   type="primary"
-                  
                   size="small"
                   @click="viewOrderDetail(scope.row)"
                 >
@@ -97,7 +97,6 @@
                 <el-button
                   v-if="scope.row.status === 0"
                   type="danger"
-              
                   size="small"
                   @click="confirmCancelOrder(scope.row)"
                 >
@@ -150,7 +149,7 @@ import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Search, RefreshRight } from "@element-plus/icons-vue";
 import { useUserInfoStore } from "@/stores/user";
-import { getUserOrders } from "@/api/order";
+import { getUserOrders, cancelOrder } from "@/api/order";
 import OrderDetailModal from "./components/OrderDetailModal.vue";
 
 // 初始化路由和 Store
@@ -173,23 +172,29 @@ const detailDialogVisible = ref(false);
 const selectedOrder = ref<any>(null);
 
 // 訂單狀態文字和標籤類型
+
 const getStatusText = (status: number) => {
   switch (status) {
     case 0:
       return "待處理";
     case 1:
       return "已發貨";
+    case 2:
+      return "已取消";
     default:
       return "未知狀態";
   }
 };
 
+// 訂單狀態標籤類型
 const getStatusType = (status: number) => {
   switch (status) {
     case 0:
       return "warning";
     case 1:
       return "success";
+    case 2:
+      return "info";
     default:
       return "info";
   }
@@ -309,6 +314,12 @@ const viewOrderDetail = (order: any) => {
 
 // 確認取消訂單
 const confirmCancelOrder = (order: any) => {
+  // 檢查訂單狀態
+  if (order.status !== 0) {
+    ElMessage.warning("只能取消未發貨的訂單");
+    return;
+  }
+
   ElMessageBox.confirm(
     `您確定要取消訂單 ${order.order_number} 嗎？此操作不可逆。`,
     "取消訂單",
@@ -318,16 +329,36 @@ const confirmCancelOrder = (order: any) => {
       type: "warning",
     }
   )
-    .then(() => {
-      // 實際應該呼叫API取消訂單，這裡只是模擬
-      ElMessage.success("訂單已取消");
+    .then(async () => {
+      try {
+        // 顯示加載狀態
+        isLoading.value = true;
 
-      // 重新獲取訂單列表
-      fetchOrders();
+        // 呼叫取消訂單 API
+        const response: any = await cancelOrder(userStore.token, order.id);
 
-      // 關閉詳情對話框（如果打開的話）
-      if (detailDialogVisible.value) {
-        detailDialogVisible.value = false;
+        if (response && response.code === 0) {
+          ElMessage.success("訂單已成功取消");
+          // 重新獲取訂單列表
+          await fetchOrders();
+        } else {
+          ElMessage.error(response?.message || "取消訂單失敗");
+        }
+      } catch (error: any) {
+        console.error("取消訂單錯誤:", error);
+
+        if (error.response?.data?.message) {
+          ElMessage.error(error.response.data.message);
+        } else {
+          ElMessage.error("取消訂單失敗，請稍後再試");
+        }
+      } finally {
+        isLoading.value = false;
+
+        // 關閉詳情對話框（如果打開的話）
+        if (detailDialogVisible.value) {
+          detailDialogVisible.value = false;
+        }
       }
     })
     .catch(() => {

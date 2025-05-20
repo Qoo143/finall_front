@@ -129,6 +129,7 @@
 
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, watch } from "vue";
+import { ElMessage } from "element-plus";
 
 // 定義props - 接收訂單數據
 const props = defineProps({
@@ -168,6 +169,8 @@ const getStatusText = (status: number) => {
       return "待處理";
     case 1:
       return "已發貨";
+    case 2:
+      return "已取消";
     default:
       return "未知狀態";
   }
@@ -180,6 +183,8 @@ const getStatusType = (status: number) => {
       return "warning";
     case 1:
       return "success";
+    case 2:
+      return "info";
     default:
       return "info";
   }
@@ -235,6 +240,13 @@ const onDialogClosed = () => {
 // 取消訂單
 const onCancelOrder = () => {
   if (!props.order) return;
+
+  // 檢查訂單狀態
+  if (props.order.status !== 0) {
+    ElMessage.warning("只能取消未發貨的訂單");
+    return;
+  }
+
   emit("cancel-order", props.order);
 };
 </script>

@@ -48,3 +48,19 @@ export function getOrderDetail(token: string, orderId: number) {
     }
   });
 }
+
+/**
+ * 取消訂單
+ * @param token 用戶令牌
+ * @param orderId 訂單ID
+ * @returns 操作結果的 Promise
+ */
+export function cancelOrder(token: string, orderId: number) {
+  return instance({
+    url: `/api/orders/${orderId}/cancel`,
+    method: "PATCH",
+    headers: {
+      Authorization: token
+    }
+  });
+}

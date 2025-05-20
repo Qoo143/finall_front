@@ -155,8 +155,6 @@
             </td>
 
             <td>
-              <span @click="openDetail(product)">查看</span>
-              |
               <RouterLink :to="`/products/manage/${product.id}`"
                 >編輯</RouterLink
               >
@@ -185,13 +183,6 @@
       v-model:visible="deleteDialogVisible"
       v-model:productId="selectedProductId"
       v-model:productName="selectedProductName"
-      :on-deleted="fetchProducts"
-    />
-
-    <ProductDetailModal
-      v-if="detailDialogVisible"
-      v-model:visible="detailDialogVisible"
-      v-model:product="selectedProduct"
       :on-deleted="fetchProducts"
     />
   </div>
@@ -375,14 +366,6 @@ const handleReset = () => {
   nameValue.value = "";
   currentPage.value = 1;
   fetchProducts();
-};
-//查看按鈕邏輯
-const detailDialogVisible = ref(false);
-const selectedProduct = ref<Product | null>(null);
-
-const openDetail = (product: Product) => {
-  selectedProduct.value = product;
-  detailDialogVisible.value = true;
 };
 //刪除按鈕邏輯
 const deleteDialogVisible = ref(false);

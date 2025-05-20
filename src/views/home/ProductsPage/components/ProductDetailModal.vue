@@ -2,17 +2,19 @@
   <el-dialog
     v-model="visibleModel"
     title="商品詳情"
-    width="80%"
+    width="70%"
     top="5vh"
     destroy-on-close
   >
     <div v-if="productModel" class="product-detail">
+      <!-- 左側區域：商品圖片/3D模型展示區 -->
       <div class="detail-image">
-        <!-- 圖片/模型顯示區域 -->
+        <!-- 主視覺區域 -->
         <div class="image-container">
-          <!-- 圖片/模型切換按鈕 -->
-          <div class="view-toggle">
+          <!-- 切換按鈕：在圖片和3D模型之間進行切換 -->
+          <div class="view-toggle" v-show="hasModel">
             <el-button-group>
+              <!-- 圖片模式按鈕 - 當前為圖片模式時按鈕高亮 -->
               <el-button
                 :type="viewMode === 'image' ? 'primary' : ''"
                 @click="viewMode = 'image'"
@@ -20,6 +22,7 @@
               >
                 <el-icon><Picture /></el-icon>
               </el-button>
+              <!-- 3D模型模式按鈕 - 只有當產品有模型時才可用 -->
               <el-button
                 :type="viewMode === 'model' ? 'primary' : ''"
                 @click="viewMode = 'model'"
@@ -75,6 +78,13 @@
       <div class="detail-info">
         <h2>{{ productModel.name }}</h2>
         <div class="price">${{ productModel.price }}</div>
+        
+        <!-- 添加商品分類顯示 -->
+        <div class="category">
+          <span class="label">分類:</span>
+          <span class="value">{{ getCategoryName }}</span>
+        </div>
+        
         <div class="stock">庫存: {{ productModel.stock }}</div>
         <div class="tags">
           <span v-for="tag in productModel.tags" :key="tag.id" class="tag">
@@ -93,7 +103,6 @@
             @click="handleAddToCart"
             >加入購物車</el-button
           >
-          <el-button size="large">收藏商品</el-button>
         </div>
       </div>
     </div>
@@ -101,11 +110,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useUserInfoStore } from "@/stores/user";
 import { ElMessage } from "element-plus";
 import { Picture, Coin } from "@element-plus/icons-vue";
 import "@google/model-viewer";
+import axios from "axios";
 
 // 定義介面
 interface Tag {
@@ -117,6 +127,11 @@ interface ProductImage {
   id: number;
   file: string;
   is_main: number;
+}
+
+interface Category {
+  id: number;
+  name: string;
 }
 
 interface Product {
@@ -144,6 +159,37 @@ const isLoadingModel = defineModel<boolean>("isLoading", { default: false });
 const productImages = ref<ProductImage[]>([]);
 const currentImageIndex = ref(0);
 const viewMode = ref<"image" | "model">("image");
+
+// 新增: 分類列表
+const categories = ref<Category[]>([]);
+
+// 新增: 獲取分類列表
+const fetchCategories = async () => {
+  try {
+    const res = await axios.get("http://127.0.0.1:3007/categories");
+    if (res.data && res.data.code === 0) {
+      categories.value = res.data.data || [];
+    }
+  } catch (error) {
+    console.error("獲取分類列表失敗:", error);
+  }
+};
+
+// 新增: 計算商品所屬分類名稱
+const getCategoryName = computed(() => {
+  if (!productModel.value || !productModel.value.category_id) return "未分類";
+  
+  const category = categories.value.find(
+    c => c.id === productModel.value?.category_id
+  );
+  
+  return category ? category.name : "未分類";
+});
+
+// 在組件掛載時獲取分類列表
+onMounted(() => {
+  fetchCategories();
+});
 
 // 監聽產品變化，更新圖片和索引
 watch(
@@ -231,20 +277,20 @@ function getThumbnailUrl(url: string) {
 const handleAddToCart = () => {
   // 檢查用戶是否已登入
   if (!userStore.isLoggedIn) {
-    ElMessage.warning('請先登入後再加入購物車');
+    ElMessage.warning("請先登入後再加入購物車");
     return;
   }
-  
+
   if (!productModel.value) return;
-  
+
   try {
     // 直接傳遞原始商品對象，讓 QuantitySelector 自行處理
-    emit('addToCart', productModel.value);
+    emit("addToCart", productModel.value);
   } catch (error) {
     if (error instanceof Error) {
       ElMessage.error(error.message);
     } else {
-      ElMessage.error('加入購物車失敗');
+      ElMessage.error("加入購物車失敗");
     }
   }
 };
@@ -289,18 +335,18 @@ const emit = defineEmits(["addToCart", "close"]);
       position: relative;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      // box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       aspect-ratio: 4/3;
-      background-color: #f9f9f9;
+      // background-color: #f9f9f9;
 
       .view-toggle {
         position: absolute;
-        top: 12px;
-        right: 12px;
+        top: 24px;
+        right: 24px;
         z-index: 10;
-        background-color: rgba(255, 255, 255, 0.8);
-        border-radius: 8px;
-        padding: 4px;
+        // background-color: rgba(255, 255, 255, 0.8);
+        // border-radius: 8px;
+        // padding: 4px;
       }
 
       .image-view,
@@ -312,6 +358,8 @@ const emit = defineEmits(["addToCart", "close"]);
           width: 100%;
           height: 100%;
           object-fit: contain;
+          border-radius: 16px;
+          overflow: hidden;
         }
       }
     }
@@ -363,6 +411,28 @@ const emit = defineEmits(["addToCart", "close"]);
       font-weight: 700;
       color: $primary-y;
       margin-bottom: 16px;
+    }
+
+    /* 新增分類樣式 */
+    .category {
+      font-size: 18px;
+      color: $text-d;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      
+      .label {
+        font-weight: 500;
+        margin-right: 8px;
+      }
+      
+      // .value {
+      //   background-color: $primary-b-ll;
+      //   color: $primary-b-d;
+      //   padding: 4px 10px;
+      //   border-radius: 6px;
+      //   font-size: 16px;
+      // }
     }
 
     .stock {

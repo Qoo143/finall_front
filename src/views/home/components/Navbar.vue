@@ -12,7 +12,6 @@
         <button @click="goto('home')">首頁</button>
         <button @click="goto('ProductsPage')">商品</button>
         <button @click="goto('OrderListPage')">訂單</button>
-        <button>關於</button>
       </nav>
 
       <!-- 中間 Logo -->
@@ -49,7 +48,6 @@
             <!-- 下拉選單內容 -->
             <div v-show="isUserDropdownOpen" class="dropdown-menu">
               <ul>
-                <li @click="goto('OrderListPage')">我的訂單</li>
                 <li @click="goto('profile')">個人資料</li>
                 <li @click="handleLogout" class="logout-item">登出</li>
               </ul>
@@ -361,6 +359,14 @@ const goToAdmin = () => {
 
     &:hover {
       background-color: #414141;
+    }
+  }
+  .login-button {
+    background-color: $primary-y;
+    color: rgb(59, 59, 59);
+    font-weight: 700;
+    &:hover {
+    background-color: $primary-y-l;
     }
   }
 }
