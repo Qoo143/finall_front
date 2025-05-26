@@ -1,12 +1,10 @@
 # QianTa 電商系統 - 前端
 
-> 📖 [返回專案總覽](https://github.com/Qoo143/QianTa) 
-
 基於 Vue 3 + TypeScript 的現代化電商前端應用，實現前後台分離的用戶界面。
 
 ## 🔗 相關連結
 - **🏠 [專案總覽](https://github.com/Qoo143/QianTa)** - 完整專案說明
-- **⚙️ [後端專案](https://github.com/Qoo143/finall_back)** - API 服務
+- **⚙️ [後端專案](https://github.com/Qoo143/finall_back)** - 後端原碼
 
 ## ⚡ 快速開始
 
@@ -16,9 +14,6 @@ npm install
 
 # 開發模式
 npm run dev
-
-# 建置生產版本
-npm run build
 ```
 
 ## 🛠 技術棧
@@ -59,15 +54,6 @@ src/
 - 📊 商品管理（CRUD）
 - 🏷️ 分類標籤管理
 - 📸 圖片與 3D 模型上傳
-- 👥 權限控制
-
-## 🎨 特色亮點
-
-- **響應式設計**：適配各種螢幕尺寸
-- **狀態持久化**：購物車跨頁面同步
-- **動畫體驗**：首頁滾動視差效果
-- **3D 展示**：商品立體預覽
-- **類型安全**：TypeScript 完整覆蓋
 
 ---
 
