@@ -17,30 +17,30 @@ const instance = axios.create({
 instance.interceptors.request.use(function (config) {
   // 獲取 store (不能使用 import 方式，因為這會造成循環依賴)
   const userStore = useUserInfoStore();
-  
+
   // 如果有 token 且請求需要添加 token
   if (userStore.token && config.headers) {
     // 檢查 token 是否過期
     if (tokenManager.isTokenExpired(userStore.token)) {
       // token 已過期，清除登入狀態
       userStore.logout();
-      
+
       // 可以在這裡顯示一個通知
       ElMessage.warning('登入已過期，請重新登入');
-      
+
       // 跳轉到登入頁 (需要使用 setTimeout 避免在攔截器中直接使用 router)
       setTimeout(() => {
         window.location.href = '/#/login';
       }, 1500);
-      
+
       // 拒絕這個請求
       return Promise.reject(new Error('登入已過期'));
     }
-    
+
     // token 有效，添加到請求頭
     config.headers.Authorization = userStore.token;
   }
-  
+
   return config;
 }, function (error) {
   return Promise.reject(error);
@@ -49,12 +49,12 @@ instance.interceptors.request.use(function (config) {
 // 響應攔截
 instance.interceptors.response.use(function (response) {
   //若返回訊息status=0 (成功)
-  if (response.data.code === 0) {
-    ElMessage({
-      message: response.data.message, //由後端返回
-      type: 'success',
-    })
-  }
+  // if (response.data.code === 0) {
+  //   ElMessage({
+  //     message: response.data.message, //由後端返回
+  //     type: 'success',
+  //   })
+  // }
   return response.data;
 }, function (error) {
   if (error && error.response) {
