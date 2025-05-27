@@ -37,7 +37,7 @@ export const useUserInfoStore = defineStore('userInfo', () => {
         token.value = userData.token;
         account.value = userData.account;
         isAdmin.value = userData.identity === 1,
-          userName.value = userData.name || '未知使用者';
+          userName.value = userData.name || '使用者';
         imageUrl.value = userData.image_url || '/img/user.jfif';
         isLoggedIn.value = true;
 
@@ -60,7 +60,7 @@ export const useUserInfoStore = defineStore('userInfo', () => {
   const logout = () => {
     token.value = '';
     account.value = '';
-    userName.value = '未知使用者'; // 重置為默認名稱
+    userName.value = '使用者'; // 重置為默認名稱
     imageUrl.value = '/img/user.jfif';
     isLoggedIn.value = false;
     isAdmin.value = false; // 重置管理員權限
