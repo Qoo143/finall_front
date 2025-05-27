@@ -58,7 +58,7 @@
     </div>
 
     <div class="listArea">
-      <table>
+      <table style="border: none">
         <colgroup>
           <!-- 比數 -->
           <col style="width: 30px" />

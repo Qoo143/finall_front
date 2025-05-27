@@ -19,7 +19,7 @@
 
     <!-- 標籤列表 -->
     <div class="listArea">
-      <table>
+      <table style="border: none">
         <colgroup>
           <col style="width: 50px" />
           <!-- 筆數 -->
